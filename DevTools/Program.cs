@@ -17,14 +17,23 @@ namespace DevTools
         {
             Application.EnableVisualStyles();
 
-            var gmod = Process.GetProcessesByName("gmod");
             List<Process> gmodList = new();
             bool injected = false;
-            foreach (var proc in gmod)
+            var gmods = Process.GetProcessesByName("gmod");
+            foreach (var proc in gmods)
             {
                 if (Injector.IsProcessInjectable(proc)) gmodList.Add(proc);
                 if (Injector.IsProcessInjected(proc)) injected = true;
             }
+#if !X64
+            var hl2s = Process.GetProcessesByName("hl2");
+            foreach (var hl2 in hl2s)
+            {
+                if (!Injector.IsHL2GMod(hl2)) continue;
+                if (Injector.IsProcessInjectable(hl2)) gmodList.Add(hl2);
+                if (Injector.IsProcessInjected(hl2)) injected = true;
+            }
+#endif
 
             if (gmodList.Count > 0 && !injected)
             {
@@ -32,7 +41,7 @@ namespace DevTools
                 if (result == DialogResult.Yes)
                 {
                     WasGModRunning = true;
-                    foreach (var proc in gmod)
+                    foreach (var proc in gmodList)
                     {
                         try
                         {

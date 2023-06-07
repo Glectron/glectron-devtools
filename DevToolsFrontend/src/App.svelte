@@ -1,7 +1,9 @@
 <script lang="ts">
+  import type { DevToolsListItem } from "./devtools";
   import AppStatus from "./lib/AppStatus.svelte";
 
   let injected = false;
+  let injectedProcess = 0;
   let injectorStatus = 0;
   let injectorStatusText: string | null = null;
   
@@ -9,20 +11,10 @@
   let lists = [];
   let listRefreshTimeout: number;
 
-  interface DevToolsListItem {
-    description: string,
-    devtoolsFrontendUrl: string,
-    id: string,
-    title: string,
-    type: string,
-    url: string,
-    webSocketDebuggerUrl: string
-  }
-
   async function requestList() {
     return new Promise((resolve, reject) => {
       if ((window as any).devtools?.performRequest) {
-        (window as any).devtools.performRequest("/json/list?t=" + new Date().valueOf()).then((val: string) => JSON.parse(val)).then(resolve).catch(reject);
+        (window as any).devtools.performRequest((injectedProcess == 0 ? "/json/list" : "/json") + "?t=" + new Date().valueOf()).then((val: string) => JSON.parse(val)).then(resolve).catch(reject);
       } else {
         reject();
       }
@@ -46,8 +38,9 @@
     });
   }
 
-  addEventListener("injected", () => {
+  addEventListener("injected", (e: CustomEvent) => {
     injected = true;
+    injectedProcess = e.detail;
     refreshList(true);
   });
 
@@ -83,9 +76,10 @@
   {
     await (window as any).CefSharp.BindObjectAsync("devtools");
 
-    (window as any).devtools.isInjected().then((val: boolean) => {
-      if (val) {
+    (window as any).devtools.injectionStatus().then((val: {Item1: boolean, Item2: number}) => {
+      if (val?.Item1) {
         injected = true;
+        injectedProcess = val.Item2;
         refreshList(true);
       }
     });
@@ -168,5 +162,5 @@
 {/if}
 <p style="text-align: center;"><button on:click={() => refreshList()} class="refresh-btn">Refresh</button></p>
 {:else}
-<AppStatus message="Waiting to inject" description="Run Garry's Mod to start the Chromium injection" error={injectorStatus == 0 || injectorStatus == 3 ? undefined : injectorStatusText}/>
+<AppStatus message="Waiting to inject" description="Run Garry's Mod to start the browser view injection" error={injectorStatus == 0 || injectorStatus == 3 ? undefined : injectorStatusText}/>
 {/if}

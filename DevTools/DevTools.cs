@@ -34,7 +34,7 @@ namespace DevTools
         {
             if (IsBrowserAtHomepage())
             {
-                browser.ExecuteScriptAsync("dispatchEvent(new Event('injected'));");
+                browser.ExecuteScriptAsync("dispatchEvent(new CustomEvent('injected', {detail: " + (int)Injector.InjectedProcess + "}));");
             }
         }
 

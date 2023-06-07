@@ -1,3 +1,6 @@
 [submodule "include/cef"]
 	path = include/cef
 	url = https://github.com/Glectron/glectron-devtools-cef.git
+[submodule "include/awesomium"]
+	path = include/awesomium
+	url = https://github.com/Glectron/glectron-devtools-awesomium.git

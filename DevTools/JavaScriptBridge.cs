@@ -9,9 +9,9 @@ namespace DevTools
 {
     internal class JavaScriptBridge
     {
-        public bool IsInjected()
+        public (bool, InjectedProcess) InjectionStatus()
         {
-            return Injector.Status == InjectorStatus.Injected;
+            return (Injector.Status == InjectorStatus.Injected, Injector.InjectedProcess);
         }
 
         public async Task<string> PerformRequest(string path)

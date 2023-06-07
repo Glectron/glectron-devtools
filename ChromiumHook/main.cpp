@@ -1,18 +1,33 @@
 // Special thanks to @wolf109909, who created the first implementation of 64-bit cef_initialize injection.
 
+#define x86 _WIN32 and !_WIN64
+
 #include <Windows.h>
 
 #include <include/capi/cef_base_capi.h>
 #include "detours/detours.h"
 #include "memory.h"
 
+#if x86
+#include <Awesomium/WebCore.h>
+#include <Awesomium/WebConfig.h>
+#endif
+
 typedef int (*cef_initializeType)(const cef_main_args_t* args, struct _cef_settings_t* settings, void* application, void* windows_sandbox_info);
 int cef_initialize_hook(const cef_main_args_t* args, struct _cef_settings_t* settings, void* application, void* windows_sandbox_info);
+
+#if x86
+typedef Awesomium::WebCore* (*awesomium_webcore_initializeType)(const Awesomium::WebConfig& config);
+Awesomium::WebCore* awesomium_webcore_initialize_hook(Awesomium::WebConfig& config);
+#endif
 
 typedef HMODULE(__stdcall*LoadLibraryExAType)(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags);
 HMODULE __stdcall LoadLibraryExAHook(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags);
 
 cef_initializeType cef_initialize_original = NULL;
+#if x86
+awesomium_webcore_initializeType awesomium_webcore_initialize_original = NULL;
+#endif
 
 LoadLibraryExAType LoadLibraryExAOriginal = LoadLibraryExA;
 
@@ -25,6 +40,16 @@ int cef_initialize_hook(const cef_main_args_t* args, struct _cef_settings_t* set
     settings->remote_debugging_port = 46587;
     return cef_initialize_original(args, settings, application, windows_sandbox_info);
 }
+
+#if x86
+Awesomium::WebCore* awesomium_webcore_initialize_hook(Awesomium::WebConfig& config) {
+    if (awesomium_webcore_initialize_original == NULL) {
+        return nullptr;
+    }
+    config.remote_debugging_port = 46587;
+    return awesomium_webcore_initialize_original(config);
+}
+#endif
 
 HMODULE __stdcall LoadLibraryExAHook(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags)
 {
@@ -45,6 +70,16 @@ HMODULE __stdcall LoadLibraryExAHook(LPCSTR lpLibFileName, HANDLE hFile, DWORD d
             DetourAttach(&(PVOID&)cef_initialize_original, cef_initialize_hook);
             DetourTransactionCommit();
         }
+#if x86
+        else if (strstr(lpLibFileName, "gmhtml.dll") != NULL) {
+            CMemAddr addr = CModule("Awesomium.dll").FindPatternSIMD("55 8B EC 51 83 65 FC 00 83 3D 30 ?? ?? ?? ?? 74 05");
+            awesomium_webcore_initialize_original = reinterpret_cast<awesomium_webcore_initializeType>(addr.GetPtr());
+            DetourTransactionBegin();
+            DetourUpdateThread(GetCurrentThread());
+            DetourAttach(&(PVOID&)awesomium_webcore_initialize_original, awesomium_webcore_initialize_hook);
+            DetourTransactionCommit();
+        }
+#endif
     }
 
     return moduleAddress;

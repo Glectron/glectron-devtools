@@ -76,12 +76,12 @@
     <OutDir>$(SolutionDir)build\x64\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(SolutionDir)include\cef;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)include\cef;$(SolutionDir)include\awesomium;$(IncludePath)</IncludePath>
     <TargetName>chromium_hook</TargetName>
     <OutDir>$(SolutionDir)build\x86\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>$(SolutionDir)include\cef;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)include\cef;$(SolutionDir)include\awesomium;$(IncludePath)</IncludePath>
     <TargetName>chromium_hook</TargetName>
     <OutDir>$(SolutionDir)build\x86\$(Configuration)\</OutDir>
   </PropertyGroup>
