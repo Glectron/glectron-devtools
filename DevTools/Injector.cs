@@ -129,7 +129,10 @@ namespace DevTools
 
         public static bool IsProcessInjected(Process proc)
         {
-            string modName = Path.GetFileNameWithoutExtension(DllPath).ToLower();
+            var modName = Path.GetFileNameWithoutExtension(DllPath);
+#if WINDOWS
+            var lowerModName = modName.ToLower();
+#endif
 
             var hProc = OpenProcess((uint)(ProcessAccessFlags.QueryInformation | ProcessAccessFlags.VirtualMemoryRead), false, (uint)proc.Id);
             if (hProc == IntPtr.Zero) return false;
@@ -156,8 +159,13 @@ namespace DevTools
                 uint ret = GetModuleFileNameEx(hProc, hMods[i], sb, sb.Capacity);
                 if (ret == 0) continue;
 
-                string module = sb.ToString();
-                if (module.ToLower().Contains(modName))
+                var module = sb.ToString();
+#if WINDOWS
+                var lowerModule = module.ToLower();
+                if (lowerModName == lowerModule)
+#else
+                if (modName == module)
+#endif
                     return true;
             }
 
