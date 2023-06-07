@@ -1,0 +1,3 @@
+[submodule "include/cef"]
+	path = include/cef
+	url = https://github.com/Glectron/glectron-devtools-cef.git
