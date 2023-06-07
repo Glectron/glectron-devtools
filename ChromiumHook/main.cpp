@@ -1,3 +1,5 @@
+// Special thanks to @wolf109909, who created the first implementation of 64-bit cef_initialize injection.
+
 #include <Windows.h>
 
 #include <include/capi/cef_base_capi.h>
