@@ -96,6 +96,9 @@
 
         p {
           margin-top: 0;
+          text-overflow: ellipsis;
+          overflow: hidden;
+          white-space: nowrap;
           opacity: .5;
         }
 
@@ -122,7 +125,7 @@
 </style>
 
 {#if injected}
-<h1>Running Glectron Apps</h1>
+<h1 style="margin-top: 0;">Running Glectron Apps</h1>
 <p>Applications can only be visible while Glectron is in debug mode.</p>
 {#if lists.length > 0}
 <ul class="app-list">

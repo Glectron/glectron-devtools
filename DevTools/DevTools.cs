@@ -61,7 +61,8 @@ namespace DevTools
             {
                 if (!browser.JavascriptObjectRepository.IsBound("devtools"))
                     browser.JavascriptObjectRepository.Register("devtools", new JavaScriptBridge());
-            } else
+            }
+            else
             {
                 browser.JavascriptObjectRepository.UnRegisterAll();
             }

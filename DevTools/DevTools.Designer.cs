@@ -35,6 +35,7 @@
             AutoScaleDimensions = new SizeF(11F, 24F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 992);
+            MinimumSize = new Size(800, 1000);
             Name = "DevTools";
             Text = "Glectron DevTools";
             FormClosing += DevTools_FormClosing;
