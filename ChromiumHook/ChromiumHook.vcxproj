@@ -73,22 +73,22 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>$(SolutionDir)include\cef;$(IncludePath)</IncludePath>
     <TargetName>chromium_hook</TargetName>
-    <OutDir>$(SolutionDir)build\x64\$(Configuration)</OutDir>
+    <OutDir>$(SolutionDir)build\x64\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <IncludePath>$(SolutionDir)include\cef;$(IncludePath)</IncludePath>
     <TargetName>chromium_hook</TargetName>
-    <OutDir>$(SolutionDir)build\x86\$(Configuration)</OutDir>
+    <OutDir>$(SolutionDir)build\x86\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IncludePath>$(SolutionDir)include\cef;$(IncludePath)</IncludePath>
     <TargetName>chromium_hook</TargetName>
-    <OutDir>$(SolutionDir)build\x86\$(Configuration)</OutDir>
+    <OutDir>$(SolutionDir)build\x86\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>$(SolutionDir)include\cef;$(IncludePath)</IncludePath>
     <TargetName>chromium_hook</TargetName>
-    <OutDir>$(SolutionDir)build\x64\$(Configuration)</OutDir>
+    <OutDir>$(SolutionDir)build\x64\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <VcpkgTriplet>x64-windows-static-md</VcpkgTriplet>

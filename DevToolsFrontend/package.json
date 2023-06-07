@@ -11,6 +11,7 @@
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^2.0.4",
     "@tsconfig/svelte": "^4.0.1",
+    "cross-env": "^7.0.3",
     "sass": "^1.62.1",
     "svelte": "^3.58.0",
     "svelte-check": "^3.3.1",

@@ -7,7 +7,7 @@
 typedef int (*cef_initializeType)(const cef_main_args_t* args, struct _cef_settings_t* settings, void* application, void* windows_sandbox_info);
 int cef_initialize_hook(const cef_main_args_t* args, struct _cef_settings_t* settings, void* application, void* windows_sandbox_info);
 
-typedef HMODULE(*LoadLibraryExAType)(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags);
+typedef HMODULE(__stdcall*LoadLibraryExAType)(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags);
 HMODULE LoadLibraryExAHook(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags);
 
 cef_initializeType cef_initialize_original = NULL;

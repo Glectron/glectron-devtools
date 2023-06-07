@@ -16,4 +16,8 @@
     <PackageReference Include="CefSharp.WinForms.NETCore" Version="113.1.40" />
   </ItemGroup>
 
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+    <Exec Command="SET CWD=&quot;$(SolutionDir)DevToolsFrontend&quot;&#xD;&#xA;&#xD;&#xA;SET MODE=production&#xD;&#xA;IF &quot;$(Configuration)&quot; == &quot;Debug&quot; (SET MODE=development)&#xD;&#xA;&#xD;&#xA;WHERE npx &gt;nul 2&gt;nul&#xD;&#xA;IF %25ERRORLEVEL%25 NEQ 0 GOTO NO_NODE&#xD;&#xA;&#xD;&#xA;WHERE yarn &gt;nul 2&gt;nul&#xD;&#xA;IF %25ERRORLEVEL%25 NEQ 0 GOTO NPM&#xD;&#xA;npx --yes cross-env ARCH=$(Platform) yarn --cwd %25CWD%25 build --mode %25MODE%25&#xD;&#xA;GOTO FINISH&#xD;&#xA;&#xD;&#xA;:NPM&#xD;&#xA;WHERE npm &gt;nul 2&gt;nul&#xD;&#xA;IF %25ERRORLEVEL%25 NEQ 0 GOTO NO_BUILDER&#xD;&#xA;npx --yes cross-env ARCH=$(Platform) npm --prefix %25CWD%25 run build --mode %25MODE%25&#xD;&#xA;GOTO FINISH&#xD;&#xA;&#xD;&#xA;:NO_NODE&#xD;&#xA;echo Node is not installed&#xD;&#xA;EXIT /B 1&#xD;&#xA;&#xD;&#xA;:NO_BUILDER&#xD;&#xA;echo Both yarn and npm cannot be found.&#xD;&#xA;EXIT /B 1&#xD;&#xA;&#xD;&#xA;:FINISH&#xD;&#xA;echo Frontend built." />
+  </Target>
+
 </Project>
