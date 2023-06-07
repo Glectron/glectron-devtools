@@ -6,7 +6,7 @@ Both Chromium and Awesomium is supported.
 
 ## Usage
 1. Start `DevTools.exe` **before** starting Garry's Mod.
-2. Start 64-bit Garry's Mod
+2. Start Garry's Mod
 3. Join a game and wait for initialization of Glectron application.
 4. Find the Glectron application in the list and click it to open the DevTools
 5. Start debugging!
