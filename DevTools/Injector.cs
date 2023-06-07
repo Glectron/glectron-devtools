@@ -129,7 +129,7 @@ namespace DevTools
 
         public static bool IsProcessInjected(Process proc)
         {
-            var modName = Path.GetFileNameWithoutExtension(DllPath);
+            var modName = Path.GetFullPath(DllPath);
 #if WINDOWS
             var lowerModName = modName.ToLower();
 #endif
@@ -159,7 +159,7 @@ namespace DevTools
                 uint ret = GetModuleFileNameEx(hProc, hMods[i], sb, sb.Capacity);
                 if (ret == 0) continue;
 
-                var module = sb.ToString();
+                var module = Path.GetFullPath(sb.ToString());
 #if WINDOWS
                 var lowerModule = module.ToLower();
                 if (lowerModName == lowerModule)
