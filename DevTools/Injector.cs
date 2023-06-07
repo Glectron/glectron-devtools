@@ -8,6 +8,14 @@ using System.Threading.Tasks;
 
 namespace DevTools
 {
+    internal enum InjectorStatus
+    {
+        NoProcessFound,
+        ProcessIncompatible,
+        InjectFailed,
+        Injected
+    }
+
     internal static class Injector
     {
         [DllImport("kernel32.dll", SetLastError = true, CallingConvention = CallingConvention.Winapi)]
@@ -119,11 +127,22 @@ namespace DevTools
         static extern int EnumProcessModules(IntPtr hProcess, [Out] IntPtr lphModule, uint cb, out uint lpcbNeeded);
 #endif
 
+        static InjectorStatus _status;
+
+        public static InjectorStatus Status
+        {
+            get { return _status; }
+            private set {
+                _status = value;
+                OnInjectorStatusChanged?.Invoke(value, new EventArgs());
+            }
+        }
+
         public delegate void InjectEventHandler(object sender, EventArgs e);
 
         public static event InjectEventHandler? OnInjected;
         public static event InjectEventHandler? OnInjectInvalid;
-        public static bool IsInjected { get; private set; }
+        public static event InjectEventHandler? OnInjectorStatusChanged;
 
         public static readonly string DllPath = Path.Combine(Path.GetDirectoryName(Environment.ProcessPath) ?? "", "chromium_hook.dll");
 
@@ -172,6 +191,19 @@ namespace DevTools
             return false;
         }
 
+        public static bool IsProcessInjectable(Process proc)
+        {
+            var procHandle = OpenProcess((uint)ProcessAccessFlags.QueryLimitedInformation, false, (uint)proc.Id);
+            if (procHandle == IntPtr.Zero) return false;
+
+            IsWow64Process(procHandle, out bool isWow64);
+#if X64
+            return !isWow64 && Environment.Is64BitOperatingSystem;
+#else
+            return (Environment.Is64BitOperatingSystem && isWow64) || !Environment.Is64BitOperatingSystem;
+#endif
+        }
+
         static bool Inject(IntPtr process)
         {
             var hLib = GetModuleHandle("kernel32.dll");
@@ -212,26 +244,32 @@ namespace DevTools
             {
                 while (true)
                 {
+                    bool injected = false;
+                    bool foundInjectable = false;
                     var procs = Process.GetProcessesByName("gmod");
                     foreach (var proc in procs)
                     {
+                        if (!IsProcessInjectable(proc)) continue;
+                        foundInjectable = true;
                         var procHandle = OpenProcess((uint)(ProcessAccessFlags.VirtualMemoryOperation | ProcessAccessFlags.VirtualMemoryWrite | ProcessAccessFlags.CreateThread | ProcessAccessFlags.QueryInformation), false, (uint)proc.Id);
                         if (procHandle != IntPtr.Zero)
                         {
-                            IsWow64Process(procHandle, out bool is64);
-                            if (!is64 && Environment.Is64BitOperatingSystem)
+                            if (IsProcessInjected(proc) || Inject(procHandle))
                             {
-                                if (IsProcessInjected(proc) || Inject(procHandle))
-                                {
-                                    IsInjected = true;
-                                    OnInjected?.Invoke(proc, new EventArgs());
-                                    proc.WaitForExit();
-                                    OnInjectInvalid?.Invoke(proc, new EventArgs());
-                                    IsInjected = false;
-                                }
+                                Status = InjectorStatus.Injected;
+                                injected = true;
+                                OnInjected?.Invoke(proc, new EventArgs());
+                                proc.WaitForExit();
+                                OnInjectInvalid?.Invoke(proc, new EventArgs());
+                                Status = InjectorStatus.NoProcessFound;
+                            } else
+                            {
+                                Status = InjectorStatus.InjectFailed;
                             }
                         }
                     }
+                    if (procs.Length > 0 && !injected && !foundInjectable)
+                        Status = InjectorStatus.ProcessIncompatible;
                     Thread.Sleep(300);
                 }
             })

@@ -22,6 +22,7 @@ namespace DevTools
 
             Injector.OnInjected += Injector_OnInjected;
             Injector.OnInjectInvalid += Injector_OnInjectInvalid;
+            Injector.OnInjectorStatusChanged += Injector_OnInjectorStatusChanged;
 
             if (Program.WasGModRunning)
             {
@@ -42,6 +43,15 @@ namespace DevTools
             if (IsBrowserAtHomepage())
             {
                 browser.ExecuteScriptAsync("dispatchEvent(new Event('uninjected'));");
+            }
+        }
+
+        private void Injector_OnInjectorStatusChanged(object sender, EventArgs e)
+        {
+            if (IsBrowserAtHomepage())
+            {
+                var stat = (InjectorStatus)sender;
+                browser.ExecuteScriptAsync("dispatchEvent(new CustomEvent('injectorstatus', {detail: " + (int)stat + "}))");
             }
         }
 

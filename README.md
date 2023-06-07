@@ -2,7 +2,7 @@
 # DevTools
 A toolset built for debugging Glectron applications.
 
-Only supports 64-bit Chromium currently.
+Only supports 64-bit and 32-bit Garry's Mod with Chromium currently.
 
 ## Usage
 1. Start `DevTools.exe` **before** starting Garry's Mod.

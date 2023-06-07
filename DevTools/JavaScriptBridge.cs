@@ -11,7 +11,7 @@ namespace DevTools
     {
         public bool IsInjected()
         {
-            return Injector.IsInjected;
+            return Injector.Status == InjectorStatus.Injected;
         }
 
         public async Task<string> PerformRequest(string path)

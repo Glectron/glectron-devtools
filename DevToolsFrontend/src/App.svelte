@@ -2,6 +2,8 @@
   import AppStatus from "./lib/AppStatus.svelte";
 
   let injected = false;
+  let injectorStatus = 0;
+  let injectorStatusText: string | null = null;
   
   let injectId = 0;
   let lists = [];
@@ -54,6 +56,27 @@
     injected = false;
     lists = [];
     injectId++;
+  });
+
+  addEventListener("injectorstatus", (e: CustomEvent) => {
+    injectorStatus = e.detail;
+    switch (injectorStatus) {
+      case 0:
+        injectorStatusText = "No process found";
+        break;
+      case 1:
+        injectorStatusText = "Process cannot be injected with this version's DevTools";
+        break;
+      case 2:
+        injectorStatusText = "Failed to inject";
+        break;
+      case 3:
+        injectorStatusText = "Injected";
+        break;
+      default:
+        injectorStatusText = null;
+        break;
+    }
   });
 
   (async function()
@@ -145,5 +168,5 @@
 {/if}
 <p style="text-align: center;"><button on:click={() => refreshList()} class="refresh-btn">Refresh</button></p>
 {:else}
-  <AppStatus message="Waiting for injection" description="Run Garry's Mod to start the Chromium injection"/>
+<AppStatus message="Waiting to inject" description="Run Garry's Mod to start the Chromium injection" error={injectorStatus == 0 || injectorStatus == 3 ? undefined : injectorStatusText}/>
 {/if}

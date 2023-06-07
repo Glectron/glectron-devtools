@@ -18,10 +18,15 @@ namespace DevTools
             Application.EnableVisualStyles();
 
             var gmod = Process.GetProcessesByName("gmod");
+            List<Process> gmodList = new();
             bool injected = false;
-            foreach (var p in gmod)
-                if (Injector.IsProcessInjected(p)) injected = true;
-            if (gmod.Length > 0 && !injected)
+            foreach (var proc in gmod)
+            {
+                if (Injector.IsProcessInjectable(proc)) gmodList.Add(proc);
+                if (Injector.IsProcessInjected(proc)) injected = true;
+            }
+
+            if (gmodList.Count > 0 && !injected)
             {
                 var result = MessageBox.Show("Garry's Mod is running, would you like to restart it in order to use the DevTools?", "Question", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
                 if (result == DialogResult.Yes)

@@ -2,6 +2,7 @@
     export let iconUrl: string = undefined;
     export let message: string;
     export let description: string = undefined;
+    export let error: string = undefined;
 </script>
 
 <style lang="scss">
@@ -32,6 +33,9 @@
         <h1>{message}</h1>
         {#if description}
         <p>{description}</p>
+        {/if}
+        {#if error}
+        <p style="color: red;font-size: smaller;">{error}</p>
         {/if}
     </div>
 </div>
