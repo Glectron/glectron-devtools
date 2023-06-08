@@ -15,9 +15,10 @@ namespace DevTools
             browser = new()
             {
                 Dock = DockStyle.Fill,
+                MenuHandler = new ContextMenuHandler(),
+                DragHandler = new DragHandler()
             };
             browser.AddressChanged += Browser_AddressChanged;
-            browser.MenuHandler = new ContextMenuHandler();
             Controls.Add(browser);
 
             Injector.OnInjected += Injector_OnInjected;
