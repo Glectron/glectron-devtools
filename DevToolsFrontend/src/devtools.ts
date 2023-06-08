@@ -1,4 +1,4 @@
-export interface DevToolsListItem {
+export interface ChromiumDevToolsListItem {
   description: string,
   devtoolsFrontendUrl: string,
   id: string,
@@ -20,3 +20,5 @@ export interface AwesomiumDevToolsListItem {
   versionStr: string,
   webSocketDebuggerUrl: string
 }
+
+export type DevToolsListItem = ChromiumDevToolsListItem & AwesomiumDevToolsListItem;

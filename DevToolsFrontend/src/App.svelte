@@ -28,7 +28,7 @@
       lists = val.filter((x) => x.title.indexOf("\u2061") != -1).map((x) => {
         return {
           devtoolsUrl: "http://127.0.0.1:46587" +  x.devtoolsFrontendUrl,
-          id: x.id,
+          id: x.id || x.sessionId,
           title: x.title.substring(0, x.title.length - 1)
         }
       });
