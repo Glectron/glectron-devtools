@@ -19,6 +19,9 @@ namespace DevTools
                 DragHandler = new DragHandler()
             };
             browser.AddressChanged += Browser_AddressChanged;
+#if !X64
+            browser.RequestHandler = new JavaScriptInjector();
+#endif
             Controls.Add(browser);
 
             Injector.OnInjected += Injector_OnInjected;
@@ -33,7 +36,7 @@ namespace DevTools
 
         private void Injector_OnInjected(object sender, EventArgs e)
         {
-            if (IsBrowserAtHomepage())
+            if (!browser.IsLoading && IsBrowserAtHomepage())
             {
                 browser.ExecuteScriptAsync("dispatchEvent(new CustomEvent('injected', {detail: " + (int)Injector.InjectedProcess + "}));");
             }
@@ -41,7 +44,7 @@ namespace DevTools
 
         private void Injector_OnInjectInvalid(object sender, EventArgs e)
         {
-            if (IsBrowserAtHomepage())
+            if (!browser.IsLoading && IsBrowserAtHomepage())
             {
                 browser.ExecuteScriptAsync("dispatchEvent(new Event('uninjected'));");
             }
@@ -49,7 +52,7 @@ namespace DevTools
 
         private void Injector_OnInjectorStatusChanged(object sender, EventArgs e)
         {
-            if (IsBrowserAtHomepage())
+            if (!browser.IsLoading && IsBrowserAtHomepage())
             {
                 var stat = (InjectorStatus)sender;
                 browser.ExecuteScriptAsync("dispatchEvent(new CustomEvent('injectorstatus', {detail: " + (int)stat + "}))");
@@ -74,9 +77,7 @@ namespace DevTools
                     browser.JavascriptObjectRepository.Register("devtools", new JavaScriptBridge());
             }
             else
-            {
                 browser.JavascriptObjectRepository.UnRegisterAll();
-            }
         }
 
         private void DevTools_Load(object sender, EventArgs e)

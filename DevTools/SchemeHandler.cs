@@ -3,6 +3,7 @@ using CefSharp.Callback;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -27,12 +28,22 @@ namespace DevTools
                         MimeType = GetMimeType(Path.GetExtension(file));
 
                         callback.Continue();
-                    } else
+                    }
+                    else
                     {
                         StatusCode = 404;
                         callback.Continue();
                     }
-                } else
+                }
+                else if (uri.Host == "awesomiumpolyfill")
+                {
+                    var assembly = Assembly.GetExecutingAssembly();
+                    var stream = assembly.GetManifestResourceStream(assembly.GetName().Name + ".AwesomiumDevToolsPolyfill.js");
+                    Stream = stream;
+                    MimeType = "text/javascript";
+                    callback.Continue();
+                }
+                else
                 {
                     callback.Cancel();
                 }
