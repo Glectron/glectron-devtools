@@ -25,7 +25,7 @@
     let id = injectId;
     requestList().then((val: DevToolsListItem[]) => {
       if (injectId != id) return;
-      lists = val.filter((x) => x.title.indexOf("\u2061") != -1).map((x) => {
+      lists = val.map((x) => {
         return {
           devtoolsUrl: "http://127.0.0.1:46587" +  x.devtoolsFrontendUrl,
           id: x.id || x.sessionId,
