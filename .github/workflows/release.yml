@@ -14,68 +14,27 @@ jobs:
   upload-release-assets:
     needs: build
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        artifact:
+          - devtools-x86
+          - devtools-x64
+          - devtools-x86-debug
+          - devtools-x64-debug
     
     steps:
-    - name: Download x86 Release artifact
+    - name: Download artifact
       uses: actions/download-artifact@v4
       with:
-        name: ${{ needs.build.outputs.artifact-x86-release-name }}
+        name: ${{ matrix.artifact }}
         path: ./artifacts
 
-    - name: Download x64 Release artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: ${{ needs.build.outputs.artifact-x64-release-name }}
-        path: ./artifacts
-
-    - name: Download x86 Debug artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: ${{ needs.build.outputs.artifact-x86-debug-name }}
-        path: ./artifacts
-
-    - name: Download x64 Debug artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: ${{ needs.build.outputs.artifact-x64-debug-name }}
-        path: ./artifacts
-
-    - name: Upload x86 Release release asset
+    - name: Upload release asset
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./artifacts/devtools-x86.zip
-        asset_name: devtools-x86.zip
-        asset_content_type: application/zip
-
-    - name: Upload x64 Release release asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./artifacts/devtools-x64.zip
-        asset_name: devtools-x64.zip
-        asset_content_type: application/zip
-
-    - name: Upload x86 Debug release asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./artifacts/devtools-x86-debug.zip
-        asset_name: devtools-x86-debug.zip
-        asset_content_type: application/zip
-
-    - name: Upload x64 Debug release asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./artifacts/devtools-x64-debug.zip
-        asset_name: devtools-x64-debug.zip
+        asset_path: ./artifacts/${{ matrix.artifact }}.zip
+        asset_name: ${{ matrix.artifact }}.zip
         asset_content_type: application/zip

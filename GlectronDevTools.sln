@@ -29,8 +29,11 @@ Global
 		{4A36C370-B0AC-4DF3-A693-9200A19C2378}.Debug|x64.ActiveCfg = Debug|x64
 		{4A36C370-B0AC-4DF3-A693-9200A19C2378}.Debug|x64.Build.0 = Debug|x64
 		{4A36C370-B0AC-4DF3-A693-9200A19C2378}.Debug|x86.ActiveCfg = Debug|x86
+		{4A36C370-B0AC-4DF3-A693-9200A19C2378}.Debug|x86.Build.0 = Debug|x86
 		{4A36C370-B0AC-4DF3-A693-9200A19C2378}.Release|x64.ActiveCfg = Release|x64
+		{4A36C370-B0AC-4DF3-A693-9200A19C2378}.Release|x64.Build.0 = Release|x64
 		{4A36C370-B0AC-4DF3-A693-9200A19C2378}.Release|x86.ActiveCfg = Release|x86
+		{4A36C370-B0AC-4DF3-A693-9200A19C2378}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
