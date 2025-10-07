@@ -21,9 +21,24 @@
     <ClCompile Include="memory.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="cef_86_hook.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="cef_137_hook.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="memory.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="cef_86_hook.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="common_cef_type.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="cef_137_hook.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

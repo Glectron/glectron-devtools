@@ -71,22 +71,22 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(SolutionDir)include\cef;$(IncludePath)</IncludePath>
+    <IncludePath>$(IncludePath)</IncludePath>
     <TargetName>chromium_hook</TargetName>
     <OutDir>$(SolutionDir)build\x64\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(SolutionDir)include\cef;$(SolutionDir)include\awesomium;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)include\awesomium;$(IncludePath)</IncludePath>
     <TargetName>chromium_hook</TargetName>
     <OutDir>$(SolutionDir)build\x86\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>$(SolutionDir)include\cef;$(SolutionDir)include\awesomium;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)include\awesomium;$(IncludePath)</IncludePath>
     <TargetName>chromium_hook</TargetName>
     <OutDir>$(SolutionDir)build\x86\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(SolutionDir)include\cef;$(IncludePath)</IncludePath>
+    <IncludePath>$(IncludePath)</IncludePath>
     <TargetName>chromium_hook</TargetName>
     <OutDir>$(SolutionDir)build\x64\$(Configuration)\</OutDir>
   </PropertyGroup>
@@ -163,10 +163,21 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="cef_137_hook.cpp">
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)include\cef\137;%(AdditionalIncludeDirectories);$(_ZVcpkgCurrentInstalledDir)include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)include\cef\137;%(AdditionalIncludeDirectories);$(_ZVcpkgCurrentInstalledDir)include</AdditionalIncludeDirectories>
+    </ClCompile>
+    <ClCompile Include="cef_86_hook.cpp">
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)include\cef\86;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)include\cef\86;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="memory.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="cef_137_hook.h" />
+    <ClInclude Include="cef_86_hook.h" />
+    <ClInclude Include="common_cef_type.h" />
     <ClInclude Include="memory.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
