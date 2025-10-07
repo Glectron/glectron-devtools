@@ -9,6 +9,8 @@ namespace DevTools
         public static bool WasGModRunning = false;
         public static string GModPath = "";
 
+        internal static DevTools? MainWindow = null;
+
         /// <summary>
         ///  The main entry point for the application.
         /// </summary>
@@ -17,7 +19,7 @@ namespace DevTools
         {
             Application.EnableVisualStyles();
 
-            List<Process> gmodList = new();
+            List<Process> gmodList = [];
             bool injected = false;
             var gmods = Process.GetProcessesByName("gmod");
             foreach (var proc in gmods)
@@ -25,15 +27,6 @@ namespace DevTools
                 if (Injector.IsProcessInjectable(proc)) gmodList.Add(proc);
                 if (Injector.IsProcessInjected(proc)) injected = true;
             }
-#if !X64
-            var hl2s = Process.GetProcessesByName("hl2");
-            foreach (var hl2 in hl2s)
-            {
-                if (!Injector.IsHL2GMod(hl2)) continue;
-                if (Injector.IsProcessInjectable(hl2)) gmodList.Add(hl2);
-                if (Injector.IsProcessInjected(hl2)) injected = true;
-            }
-#endif
 
             if (gmodList.Count > 0 && !injected)
             {
@@ -70,7 +63,8 @@ namespace DevTools
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
-            Application.Run(new DevTools());
+            MainWindow = new DevTools();
+            Application.Run(MainWindow);
         }
     }
 }

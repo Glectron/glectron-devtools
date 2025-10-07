@@ -1,14 +1,14 @@
 ﻿namespace DevTools
 {
-    partial class DevTools
+    partial class DevToolsFrame
     {
         /// <summary>
-        ///  Required designer variable.
+        /// Required designer variable.
         /// </summary>
         private System.ComponentModel.IContainer components = null;
 
         /// <summary>
-        ///  Clean up any resources being used.
+        /// Clean up any resources being used.
         /// </summary>
         /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
         protected override void Dispose(bool disposing)
@@ -23,22 +23,21 @@
         #region Windows Form Designer generated code
 
         /// <summary>
-        ///  Required method for Designer support - do not modify
-        ///  the contents of this method with the code editor.
+        /// Required method for Designer support - do not modify
+        /// the contents of this method with the code editor.
         /// </summary>
         private void InitializeComponent()
         {
             SuspendLayout();
             // 
-            // DevTools
+            // DevToolsFrame
             // 
             AutoScaleDimensions = new SizeF(11F, 24F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(800, 992);
-            MinimumSize = new Size(800, 1000);
-            Name = "DevTools";
-            Text = "Glectron DevTools";
-            Load += DevTools_Load;
+            ClientSize = new Size(1526, 908);
+            Name = "DevToolsFrame";
+            Text = "Remote Debugging";
+            Load += DevToolsFrame_Load;
             ResumeLayout(false);
         }
 

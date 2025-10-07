@@ -16,12 +16,6 @@ namespace DevTools
         Injected
     }
 
-    internal enum InjectedProcess
-    {
-        GarrysMod,
-        HL2
-    }
-
     internal static class Injector
     {
         [DllImport("kernel32.dll", SetLastError = true, CallingConvention = CallingConvention.Winapi)]
@@ -140,11 +134,15 @@ namespace DevTools
             get { return _status; }
             private set {
                 _status = value;
-                OnInjectorStatusChanged?.Invoke(value, new EventArgs());
+                try
+                {
+                    OnInjectorStatusChanged?.Invoke(value, new EventArgs());
+                } catch
+                {
+
+                }
             }
         }
-
-        public static InjectedProcess InjectedProcess { get; private set; }
 
         public delegate void InjectEventHandler(object sender, EventArgs e);
 
@@ -212,19 +210,6 @@ namespace DevTools
 #endif
         }
 
-#if !X64
-        public static bool IsHL2GMod(Process proc)
-        {
-            if (proc.MainModule?.FileName == null) return false;
-            var path = Path.GetDirectoryName(proc.MainModule?.FileName);
-            if (path != null && Directory.Exists(Path.Combine(path, "garrysmod")))
-            {
-                return true;
-            }
-            return false;
-        }
-#endif
-
         static bool Inject(IntPtr process)
         {
             var hLib = GetModuleHandle("kernel32.dll");
@@ -269,11 +254,6 @@ namespace DevTools
                     bool foundInjectable = false;
                     var procs = new List<Process>();
                     procs.AddRange(Process.GetProcessesByName("gmod"));
-#if !X64
-                    var hl2s = Process.GetProcessesByName("hl2");
-                    foreach (var hl2 in hl2s)
-                        if (IsHL2GMod(hl2)) procs.Add(hl2);
-#endif
                     foreach (var proc in procs)
                     {
                         if (!IsProcessInjectable(proc)) continue;
@@ -284,11 +264,22 @@ namespace DevTools
                             if (IsProcessInjected(proc) || Inject(procHandle))
                             {
                                 Status = InjectorStatus.Injected;
-                                InjectedProcess = proc.ProcessName.Contains("gmod") ? InjectedProcess.GarrysMod : InjectedProcess.HL2;
                                 injected = true;
-                                OnInjected?.Invoke(proc, new EventArgs());
+                                try
+                                {
+                                    OnInjected?.Invoke(proc, new EventArgs());
+                                } catch
+                                {
+
+                                }
                                 proc.WaitForExit();
-                                OnInjectInvalid?.Invoke(proc, new EventArgs());
+                                try
+                                {
+                                    OnInjectInvalid?.Invoke(proc, new EventArgs());
+                                } catch
+                                {
+
+                                }
                                 Status = InjectorStatus.NoProcessFound;
                             } else
                             {

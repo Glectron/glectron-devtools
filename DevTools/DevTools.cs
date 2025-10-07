@@ -18,10 +18,7 @@ namespace DevTools
                 MenuHandler = new ContextMenuHandler(),
                 DragHandler = new DragHandler()
             };
-            browser.AddressChanged += Browser_AddressChanged;
-#if !X64
-            browser.RequestHandler = new JavaScriptInjector();
-#endif
+            browser.JavascriptObjectRepository.Register("devtools", new JavaScriptBridge());
             Controls.Add(browser);
 
             Injector.OnInjected += Injector_OnInjected;
@@ -34,64 +31,31 @@ namespace DevTools
             }
         }
 
-        private void Injector_OnInjected(object sender, EventArgs e)
+        private async void Injector_OnInjected(object sender, EventArgs e)
         {
-            if (!browser.IsLoading && IsBrowserAtHomepage())
-            {
-                browser.ExecuteScriptAsync("dispatchEvent(new CustomEvent('injected', {detail: " + (int)Injector.InjectedProcess + "}));");
-            }
+            if (!browser.IsBrowserInitialized) return;
+            if (browser.IsLoading) await browser.WaitForNavigationAsync();
+            browser.ExecuteScriptAsync("dispatchEvent(new Event('injected'));");
         }
 
-        private void Injector_OnInjectInvalid(object sender, EventArgs e)
+        private async void Injector_OnInjectInvalid(object sender, EventArgs e)
         {
-            if (!browser.IsLoading && IsBrowserAtHomepage())
-            {
-                browser.ExecuteScriptAsync("dispatchEvent(new Event('uninjected'));");
-            }
+            if (!browser.IsBrowserInitialized) return;
+            if (browser.IsLoading) await browser.WaitForNavigationAsync();
+            browser.ExecuteScriptAsync("dispatchEvent(new Event('uninjected'));");
         }
 
-        private void Injector_OnInjectorStatusChanged(object sender, EventArgs e)
+        private async void Injector_OnInjectorStatusChanged(object sender, EventArgs e)
         {
-            if (!browser.IsLoading && IsBrowserAtHomepage())
-            {
-                var stat = (InjectorStatus)sender;
-                browser.ExecuteScriptAsync("dispatchEvent(new CustomEvent('injectorstatus', {detail: " + (int)stat + "}))");
-            }
-        }
-
-        private bool IsBrowserAtHomepage()
-        {
-            var uri = new Uri(browser.Address);
-            return uri.Scheme == "glectron" && uri.Host == "frontend" && uri.AbsolutePath == "/index.html";
-        }
-
-        private void Browser_AddressChanged(object? sender, EventArgs e)
-        {
-            Invoke(() =>
-            {
-                Text = IsBrowserAtHomepage() ? "Glectron DevTools" : "Inspecting Glectron application (click close to return homepage)";
-            });
-            if (IsBrowserAtHomepage())
-            {
-                if (!browser.JavascriptObjectRepository.IsBound("devtools"))
-                    browser.JavascriptObjectRepository.Register("devtools", new JavaScriptBridge());
-            }
-            else
-                browser.JavascriptObjectRepository.UnRegisterAll();
+            if (!browser.IsBrowserInitialized) return;
+            if (browser.IsLoading) await browser.WaitForNavigationAsync();
+            var stat = (InjectorStatus)sender;
+            browser.ExecuteScriptAsync("dispatchEvent(new CustomEvent('injectorstatus', {detail: " + (int)stat + "}))");
         }
 
         private void DevTools_Load(object sender, EventArgs e)
         {
             browser.LoadUrl("glectron://frontend/index.html");
-        }
-
-        private void DevTools_FormClosing(object sender, FormClosingEventArgs e)
-        {
-            if (!IsBrowserAtHomepage())
-            {
-                browser.LoadUrl("glectron://frontend/index.html");
-                e.Cancel = true;
-            }
         }
     }
 }

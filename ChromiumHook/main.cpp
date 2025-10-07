@@ -6,41 +6,18 @@
 
 #include "common_cef_type.h"
 #include "cef_86_hook.h"
-#if !(x86)
+#if _WIN64
 #include "cef_137_hook.h"
 #endif
 #include "detours/detours.h"
 #include "memory.h"
 
-#if x86
-#include <Awesomium/WebCore.h>
-#include <Awesomium/WebConfig.h>
-#endif
-
-#if x86
-typedef Awesomium::WebCore* (*awesomium_webcore_initializeType)(const Awesomium::WebConfig& config);
-Awesomium::WebCore* awesomium_webcore_initialize_hook(Awesomium::WebConfig& config);
-#endif
-
 typedef HMODULE(__stdcall*LoadLibraryExAType)(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags);
 HMODULE __stdcall LoadLibraryExAHook(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags);
 
 cef_initializeType cef_initialize_original = NULL;
-#if x86
-awesomium_webcore_initializeType awesomium_webcore_initialize_original = NULL;
-#endif
 
 LoadLibraryExAType LoadLibraryExAOriginal = LoadLibraryExA;
-
-#if x86
-Awesomium::WebCore* awesomium_webcore_initialize_hook(Awesomium::WebConfig& config) {
-    if (awesomium_webcore_initialize_original == NULL) {
-        return nullptr;
-    }
-    config.remote_debugging_port = 46587;
-    return awesomium_webcore_initialize_original(config);
-}
-#endif
 
 HMODULE __stdcall LoadLibraryExAHook(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags)
 {
@@ -71,16 +48,6 @@ HMODULE __stdcall LoadLibraryExAHook(LPCSTR lpLibFileName, HANDLE hFile, DWORD d
             DetourAttach(&(PVOID&)cef_initialize_original, hook_func);
             DetourTransactionCommit();
         }
-#if x86
-        else if (strstr(lpLibFileName, "gmhtml.dll") != NULL) {
-            CMemAddr addr = CModule("Awesomium.dll").FindPatternSIMD("55 8B EC 51 83 65 FC 00 83 3D 30 ?? ?? ?? ?? 74 05");
-            awesomium_webcore_initialize_original = reinterpret_cast<awesomium_webcore_initializeType>(addr.GetPtr());
-            DetourTransactionBegin();
-            DetourUpdateThread(GetCurrentThread());
-            DetourAttach(&(PVOID&)awesomium_webcore_initialize_original, awesomium_webcore_initialize_hook);
-            DetourTransactionCommit();
-        }
-#endif
     }
 
     return moduleAddress;

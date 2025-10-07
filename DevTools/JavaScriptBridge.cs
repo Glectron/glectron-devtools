@@ -9,9 +9,9 @@ namespace DevTools
 {
     internal class JavaScriptBridge
     {
-        public (bool, InjectedProcess) InjectionStatus()
+        public bool InjectionStatus()
         {
-            return (Injector.Status == InjectorStatus.Injected, Injector.InjectedProcess);
+            return Injector.Status == InjectorStatus.Injected;
         }
 
         public async Task<string> PerformRequest(string path)
@@ -19,6 +19,17 @@ namespace DevTools
             HttpClient hc = new();
             var res = await hc.GetAsync("http://127.0.0.1:46587" + path);
             return await res.Content.ReadAsStringAsync();
+        }
+
+        public void OpenDevTools(string ws, string? title)
+        {
+            if (Program.MainWindow == null) throw new InvalidOperationException("Main window is not available.");
+            Program.MainWindow.Invoke(() =>
+            {
+                var wnd = new DevToolsFrame(ws);
+                if (title != null) wnd.Text = title;
+                wnd.Show();
+            });
         }
     }
 }

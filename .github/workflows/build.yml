@@ -1,0 +1,133 @@
+name: Build
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main", "develop" ]
+  workflow_call:
+    outputs:
+      artifact-x86-release-name:
+        description: "Name of the x86 release artifact"
+        value: ${{ jobs.build.outputs.artifact-x86-release-name }}
+      artifact-x64-release-name:
+        description: "Name of the x64 release artifact"
+        value: ${{ jobs.build.outputs.artifact-x64-release-name }}
+      artifact-x86-debug-name:
+        description: "Name of the x86 debug artifact"
+        value: ${{ jobs.build.outputs.artifact-x86-debug-name }}
+      artifact-x64-debug-name:
+        description: "Name of the x64 debug artifact"
+        value: ${{ jobs.build.outputs.artifact-x64-debug-name }}
+
+env:
+  SOLUTION_FILE_PATH: GlectronDevTools.sln
+
+jobs:
+  build:
+    runs-on: windows-latest
+    outputs:
+      artifact-x86-release-name: ${{ steps.set-outputs.outputs.artifact-x86-release-name }}
+      artifact-x64-release-name: ${{ steps.set-outputs.outputs.artifact-x64-release-name }}
+      artifact-x86-debug-name: ${{ steps.set-outputs.outputs.artifact-x86-debug-name }}
+      artifact-x64-debug-name: ${{ steps.set-outputs.outputs.artifact-x64-debug-name }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+
+    - name: Add MSBuild to PATH
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Restore NuGet packages
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: msbuild /t:Restore ${{env.SOLUTION_FILE_PATH}}
+
+    - name: Build x86 Release
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: msbuild /m /p:Configuration=Release /p:Platform=x86 ${{env.SOLUTION_FILE_PATH}}
+
+    - name: Build x64 Release
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: msbuild /m /p:Configuration=Release /p:Platform=x64 ${{env.SOLUTION_FILE_PATH}}
+
+    - name: Build x86 Debug
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: msbuild /m /p:Configuration=Debug /p:Platform=x86 ${{env.SOLUTION_FILE_PATH}}
+
+    - name: Build x64 Debug
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: msbuild /m /p:Configuration=Debug /p:Platform=x64 ${{env.SOLUTION_FILE_PATH}}
+
+    - name: Create x86 Release artifact zip
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: |
+        Compress-Archive -Path "build\x86\Release\*" -DestinationPath "devtools-x86.zip"
+      shell: pwsh
+
+    - name: Create x64 Release artifact zip
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: |
+        Compress-Archive -Path "build\x64\Release\*" -DestinationPath "devtools-x64.zip"
+      shell: pwsh
+
+    - name: Create x86 Debug artifact zip
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: |
+        Compress-Archive -Path "build\x86\Debug\*" -DestinationPath "devtools-x86-debug.zip"
+      shell: pwsh
+
+    - name: Create x64 Debug artifact zip
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: |
+        Compress-Archive -Path "build\x64\Debug\*" -DestinationPath "devtools-x64-debug.zip"
+      shell: pwsh
+
+    - name: Upload x86 Release artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: devtools-x86
+        path: devtools-x86.zip
+        retention-days: 30
+
+    - name: Upload x64 Release artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: devtools-x64
+        path: devtools-x64.zip
+        retention-days: 30
+
+    - name: Upload x86 Debug artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: devtools-x86-debug
+        path: devtools-x86-debug.zip
+        retention-days: 30
+
+    - name: Upload x64 Debug artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: devtools-x64-debug
+        path: devtools-x64-debug.zip
+        retention-days: 30
+
+    - name: Set outputs
+      id: set-outputs
+      run: |
+        echo "artifact-x86-release-name=devtools-x86" >> $GITHUB_OUTPUT
+        echo "artifact-x64-release-name=devtools-x64" >> $GITHUB_OUTPUT
+        echo "artifact-x86-debug-name=devtools-x86-debug" >> $GITHUB_OUTPUT
+        echo "artifact-x64-debug-name=devtools-x64-debug" >> $GITHUB_OUTPUT
+      shell: bash
