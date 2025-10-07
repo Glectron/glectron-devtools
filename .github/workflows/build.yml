@@ -43,6 +43,16 @@ jobs:
       with:
         node-version: '20.x'
 
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgGitCommitId: '1005b78fa1bf1dde1a20c2734cba4ea61ca94d9a'
+
+    - name: Install vcpkg integration
+      run: |
+        vcpkg integrate install
+      shell: pwsh
+
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v2
 
