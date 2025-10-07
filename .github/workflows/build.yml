@@ -30,7 +30,7 @@ jobs:
         node-version: '20.x'
 
     - name: Install Node.js dependencies
-      working-directory: ${{env.GITHUB_WORKSPACE}}/DevToolsFrontend
+      working-directory: ${{github.workspace}}/DevToolsFrontend
       run: yarn
 
     - name: Setup vcpkg
@@ -52,15 +52,15 @@ jobs:
         dotnet-version: '8.0.x'
 
     - name: Restore NuGet packages
-      working-directory: ${{env.GITHUB_WORKSPACE}}
+      working-directory: ${{github.workspace}}
       run: msbuild /t:Restore ${{env.SOLUTION_FILE_PATH}}
 
     - name: Build ${{ matrix.platform }} ${{ matrix.configuration }}
-      working-directory: ${{env.GITHUB_WORKSPACE}}
+      working-directory: ${{github.workspace}}
       run: msbuild /m /p:Configuration=${{ matrix.configuration }} /p:Platform=${{ matrix.platform }} ${{env.SOLUTION_FILE_PATH}}
 
     - name: Create artifact zip
-      working-directory: ${{env.GITHUB_WORKSPACE}}
+      working-directory: ${{github.workspace}}
       run: |
         $suffix = if ("${{ matrix.configuration }}" -eq "Debug") { "-debug" } else { "" }
         Compress-Archive -Path "build\${{ matrix.platform }}\${{ matrix.configuration }}\*" -DestinationPath "devtools-${{ matrix.platform }}$suffix.zip"
