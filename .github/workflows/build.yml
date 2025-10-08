@@ -53,7 +53,7 @@ jobs:
 
     - name: Restore NuGet packages
       working-directory: ${{github.workspace}}
-      run: msbuild /t:Restore ${{env.SOLUTION_FILE_PATH}}
+      run: msbuild /t:Restore /p:Platform=${{ matrix.platform }} /p:RuntimeIdentifier=win-${{ matrix.platform }} ${{env.SOLUTION_FILE_PATH}}
 
     - name: Build ${{ matrix.platform }} ${{ matrix.configuration }}
       working-directory: ${{github.workspace}}

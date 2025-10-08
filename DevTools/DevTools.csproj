@@ -7,14 +7,15 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <BaseOutputPath>$(SolutionDir)build</BaseOutputPath>
-	<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-	<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
-	<Platforms>x64;x86</Platforms>
-	<DefineConstants Condition="'$(Platform)' == 'x64'">$(DefineConstants);X64</DefineConstants>
-	
-	<!-- CefSharp runtime copy settings -->
-	<CefSharpAnyCpuSupport>false</CefSharpAnyCpuSupport>
-	<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+    <Platforms>x64;x86</Platforms>
+    <RuntimeIdentifiers>win-x86;win-x64</RuntimeIdentifiers>
+    <DefineConstants Condition="'$(Platform)' == 'x64'">$(DefineConstants);X64</DefineConstants>
+    
+    <!-- CefSharp runtime copy settings -->
+    <CefSharpAnyCpuSupport>false</CefSharpAnyCpuSupport>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
   
   <PropertyGroup Condition="'$(Platform)' == 'x86'">
@@ -24,23 +25,6 @@
   <PropertyGroup Condition="'$(Platform)' == 'x64'">
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
   </PropertyGroup>
-  
-  <!-- Exclude arm64 runtimes from being copied -->
-  <ItemGroup>
-    <Content Remove="runtimes\win-arm64\**" />
-    <None Remove="runtimes\win-arm64\**" />
-  </ItemGroup>
-  
-  <!-- Only include runtime files for the current platform -->
-  <ItemGroup Condition="'$(Platform)' == 'x86'">
-    <Content Remove="runtimes\win-x64\**" />
-    <None Remove="runtimes\win-x64\**" />
-  </ItemGroup>
-  
-  <ItemGroup Condition="'$(Platform)' == 'x64'">
-    <Content Remove="runtimes\win-x86\**" />
-    <None Remove="runtimes\win-x86\**" />
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="CefSharp.WinForms.NETCore" Version="140.1.140" />
