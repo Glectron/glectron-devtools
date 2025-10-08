@@ -57,5 +57,10 @@ namespace DevTools
         {
             browser.LoadUrl("glectron://frontend/index.html");
         }
+
+        private void DevTools_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            Application.Exit();
+        }
     }
 }

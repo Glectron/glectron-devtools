@@ -1,7 +1,7 @@
 <script lang="ts">
   import "./app.css";
   import he from "he";
-  import { RefreshCcw } from "@lucide/svelte";
+  import { RefreshCcw, FileQuestionMark, PanelsTopLeft, Cog } from "@lucide/svelte";
   import { Button } from "$lib/components/ui/button";
   import { ScrollArea } from "$lib/components/ui/scroll-area";
   import { InjectorStatus } from "./types";
@@ -104,6 +104,10 @@
         <div role="menu">
           {#each inspectables as inspectable (inspectable.id)}
             {#if inspectable.webSocketDebuggerUrl}
+              {@const Title = {
+                page: PanelsTopLeft,
+                worker: Cog,
+              }[inspectable.type] || FileQuestionMark}
               {@const title = he.decode(inspectable.title)}
               {@const openDevTools = () =>
                 devtools.openDevTools(
@@ -118,9 +122,9 @@
                 onkeydown={(e) => e.key === "Enter" && openDevTools()}
                 tabindex="0"
               >
-                <h2 class="text-lg font-bold">{title}</h2>
-                <p class="text-xs opacity-85">{inspectable.id}</p>
-                <p class="text-xs opacity-85">{inspectable.url}</p>
+                <h2 class="flex gap-1 items-center text-lg font-bold overflow-hidden" class:italic={!title}><Title class="size-6 shrink-0"/><span class="truncate pr-1">{title || "Untitled"}</span></h2>
+                <p class="text-xs opacity-85 truncate">{inspectable.id}</p>
+                <p class="text-xs opacity-85 truncate">{inspectable.url}</p>
               </div>
             {/if}
           {:else}

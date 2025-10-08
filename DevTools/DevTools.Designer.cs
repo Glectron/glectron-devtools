@@ -38,6 +38,7 @@
             MinimumSize = new Size(800, 1000);
             Name = "DevTools";
             Text = "Glectron DevTools";
+            FormClosed += DevTools_FormClosed;
             Load += DevTools_Load;
             ResumeLayout(false);
         }
