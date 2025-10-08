@@ -1,15 +1,17 @@
 ![Glectron](https://raw.githubusercontent.com/Glectron/glectron/main/assets/glectron.svg)
 # DevTools
-A toolset built for debugging Glectron applications.
+A tool built for debugging Garry's Mod's DHTML panels.
 
-Both Chromium and Awesomium is supported.
+If you are looking for Awesomium support, see [awesomium](https://github.com/Glectron/glectron-devtools/tree/awesomium) branch.
 
 ## Usage
 1. Start `DevTools.exe` **before** starting Garry's Mod.
 2. Start Garry's Mod
-3. Join a game and wait for initialization of Glectron application.
-4. Find the Glectron application in the list and click it to open the DevTools
-5. Start debugging!
+3. Find the view you want to inspect in the list and click it to open the DevTools
+4. Start debugging!
+
+# Download
+Latest version can be downloaded [here](https://github.com/Glectron/glectron-devtools/releases/latest).
 
 ## Build
 To build it, you will need `Visual Studio 2022`, `Node.JS`.
