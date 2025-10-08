@@ -8,6 +8,7 @@
 
   let injected = $state(false);
   let injectorStatusText: string | null = $state(null);
+  let debuggingPort = $state(-1);
   let inspectables: DevToolsListItem[] = $state([]);
   let injectId = 0;
   let listRefreshTimeout: number;
@@ -37,8 +38,9 @@
       });
   }
 
-  addEventListener("injected", () => {
+  addEventListener("injected", (e) => {
     injected = true;
+    debuggingPort = e.detail;
     refreshList(true);
   });
 
@@ -60,6 +62,9 @@
         injectorStatusText =
           "Process cannot be injected with this version's DevTools";
         break;
+      case InjectorStatus.NoPortAvailable:
+        injectorStatusText = "No debugging port available between 1024-65535";
+        break;
       case InjectorStatus.InjectFailed:
         injectorStatusText = "Failed to inject";
         break;
@@ -75,9 +80,10 @@
   (async function () {
     await (window as any).CefSharp.BindObjectAsync("devtools");
 
-    devtools.injectionStatus().then((val: boolean) => {
-      if (val) {
+    devtools.injectionStatus().then((val) => {
+      if (val[0] === InjectorStatus.Injected) {
         injected = true;
+        debuggingPort = val[1];
         refreshList(true);
       }
     });
@@ -95,9 +101,16 @@
             DevTools will be closed if this window is closed.
           </p>
         </div>
-        <Button class="cursor-pointer" disabled={refreshing}>
-          <RefreshCcw />
-        </Button>
+        <div class="flex flex-col items-end">
+          {#if debuggingPort !== 0}
+          <p class="text-xs opacity-85 my-2">Remote Debugging at {debuggingPort}</p>
+          {:else}
+          <p class="text-xs opacity-85 my-2">Remote Debugging not available</p>
+          {/if}
+          <Button class="cursor-pointer" disabled={refreshing}>
+            <RefreshCcw />
+          </Button>
+        </div>
       </div>
 
       <ScrollArea class="p-4 pb-0 grow-1 min-h-0">

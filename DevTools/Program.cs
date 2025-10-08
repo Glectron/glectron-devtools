@@ -25,7 +25,7 @@ namespace DevTools
             foreach (var proc in gmods)
             {
                 if (Injector.IsProcessInjectable(proc)) gmodList.Add(proc);
-                if (Injector.IsProcessInjected(proc)) injected = true;
+                if (Injector.IsProcessInjected(proc) && Injector.GetInjectedPort(proc) != -1) injected = true;
             }
 
             if (gmodList.Count > 0 && !injected)

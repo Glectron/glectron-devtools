@@ -35,7 +35,7 @@ namespace DevTools
         {
             if (!browser.IsBrowserInitialized) return;
             if (browser.IsLoading) await browser.WaitForNavigationAsync();
-            browser.ExecuteScriptAsync("dispatchEvent(new Event('injected'));");
+            browser.ExecuteScriptAsync("dispatchEvent(new CustomEvent('injected', { detail: " + Injector.DebuggingPort + " }));");
         }
 
         private async void Injector_OnInjectInvalid(object sender, EventArgs e)

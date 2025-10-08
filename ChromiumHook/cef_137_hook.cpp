@@ -52,7 +52,7 @@ int cef_137_initialize_hook(const void* args, void* settings, void* application,
     }
     
     auto s = reinterpret_cast<_cef_settings_t*>(settings);
-    s->remote_debugging_port = 46587;
+    s->remote_debugging_port = debuggingPort;
 
 	auto module = GetModuleHandleW(L"libcef.dll");
 	if (!module) return cef_initialize_original(args, s, application, windows_sandbox_info);

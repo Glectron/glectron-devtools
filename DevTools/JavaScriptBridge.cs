@@ -9,15 +9,15 @@ namespace DevTools
 {
     internal class JavaScriptBridge
     {
-        public bool InjectionStatus()
+        public int[] InjectionStatus()
         {
-            return Injector.Status == InjectorStatus.Injected;
+            return [(int)Injector.Status, Injector.DebuggingPort];
         }
 
         public async Task<string> PerformRequest(string path)
         {
             HttpClient hc = new();
-            var res = await hc.GetAsync("http://127.0.0.1:46587" + path);
+            var res = await hc.GetAsync("http://127.0.0.1:" + Injector.DebuggingPort + path);
             return await res.Content.ReadAsStringAsync();
         }
 

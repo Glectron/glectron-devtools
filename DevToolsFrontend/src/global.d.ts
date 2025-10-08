@@ -9,13 +9,13 @@ declare interface DevToolsListItem {
 }
 
 declare interface DevTools {
-  injectionStatus: () => Promise<boolean>;
+  injectionStatus: () => Promise<[import("./types").InjectorStatus, number]>;
   performRequest: (url: string) => Promise<string>;
   openDevTools: (webSocketUrl: string, title?: string) => void;
 }
 
 interface WindowEventMap {
-  "injected": Event;
+  "injected": CustomEvent<int>;
   "uninjected": Event;
   "injectorstatus": CustomEvent<number>;
 }

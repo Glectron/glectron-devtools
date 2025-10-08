@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO.MemoryMappedFiles;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,6 +14,7 @@ namespace DevTools
     {
         NoProcessFound,
         ProcessIncompatible,
+        NoPortAvailable,
         InjectFailed,
         Injected
     }
@@ -144,6 +147,8 @@ namespace DevTools
             }
         }
 
+        public static int DebuggingPort { get; private set; } = 0;
+
         public delegate void InjectEventHandler(object sender, EventArgs e);
 
         public static event InjectEventHandler? OnInjected;
@@ -151,6 +156,52 @@ namespace DevTools
         public static event InjectEventHandler? OnInjectorStatusChanged;
 
         public static readonly string DllPath = Path.Combine(Path.GetDirectoryName(Environment.ProcessPath) ?? "", "chromium_hook.dll");
+
+        public static int FindAvailablePort(int startPort = 1024, int endPort = 65535)
+        {
+            // Get all active TCP connections and listeners
+            var ipGlobalProperties = IPGlobalProperties.GetIPGlobalProperties();
+            var activePorts = new HashSet<int>();
+            
+            foreach (var endpoint in ipGlobalProperties.GetActiveTcpListeners())
+            {
+                activePorts.Add(endpoint.Port);
+            }
+            
+            foreach (var connection in ipGlobalProperties.GetActiveTcpConnections())
+            {
+                activePorts.Add(connection.LocalEndPoint.Port);
+            }
+
+            foreach (var endpoint in ipGlobalProperties.GetActiveUdpListeners())
+            {
+                activePorts.Add(endpoint.Port);
+            }
+
+            // Start from a random port in the range
+            Random random = new();
+            int randomStart = random.Next(startPort, endPort + 1);
+            
+            // Check from random start to end of range
+            for (int port = randomStart; port <= endPort; port++)
+            {
+                if (!activePorts.Contains(port))
+                {
+                    return port;
+                }
+            }
+            
+            // Check backwards from random start to start of range
+            for (int port = randomStart - 1; port >= startPort; port--)
+            {
+                if (!activePorts.Contains(port))
+                {
+                    return port;
+                }
+            }
+            
+            throw new InvalidOperationException($"No available ports found in range {startPort}-{endPort}");
+        }
 
         public static bool IsProcessInjected(Process proc)
         {
@@ -210,8 +261,30 @@ namespace DevTools
 #endif
         }
 
-        static bool Inject(IntPtr process)
+        public static int GetInjectedPort(Process proc)
         {
+            string shmName = $"GlectrionDevTools_{proc.Id}";
+            try
+            {
+                using var mmf = MemoryMappedFile.OpenExisting(shmName);
+                using var accessor = mmf.CreateViewAccessor();
+                accessor.Read(0, out int port);
+                return port;
+            }
+            catch
+            {
+                return -1;
+            }
+        }
+
+        static bool Inject(Process proc, IntPtr process, int port)
+        {
+            string shmName = $"GlectrionDevToolsParam_{proc.Id}";
+            var mmf = MemoryMappedFile.CreateNew(shmName, sizeof(int));
+            using var accessor = mmf.CreateViewAccessor();
+
+            accessor.Write(0, port);
+
             var hLib = GetModuleHandle("kernel32.dll");
             if (hLib == IntPtr.Zero) return false;
             var hProc = GetProcAddress(hLib, "LoadLibraryW");
@@ -219,7 +292,7 @@ namespace DevTools
 
             var len = (DllPath.Length + 1) * 2;
 
-            var remoteAddr = VirtualAllocEx(process, IntPtr.Zero, (IntPtr)len, AllocationType.Commit | AllocationType.Reserve, MemoryProtection.ReadWrite);
+            var remoteAddr = VirtualAllocEx(process, IntPtr.Zero, len, AllocationType.Commit | AllocationType.Reserve, MemoryProtection.ReadWrite);
             if (remoteAddr == IntPtr.Zero) return false;
 
             var dllPathPtr = Marshal.StringToHGlobalUni(DllPath);
@@ -241,6 +314,12 @@ namespace DevTools
 
             VirtualFreeEx(process, remoteAddr, len, FreeType.Release);
 
+            Task.Run(async () =>
+            {
+                await proc.WaitForExitAsync();
+                mmf.Dispose();
+            });
+
             return waitRet == WAIT_OBJECT_0;
         }
 
@@ -248,47 +327,75 @@ namespace DevTools
         {
             new Thread(() =>
             {
+                bool wasInjected = false;
                 while (true)
                 {
+                    DebuggingPort = 0;
                     bool injected = false;
                     bool foundInjectable = false;
+                    int port;
+                    try
+                    {
+                        port = FindAvailablePort(1024, 65535);
+                    }
+                    catch
+                    {
+                        Status = InjectorStatus.NoPortAvailable;
+                        continue;
+                    }
                     var procs = new List<Process>();
                     procs.AddRange(Process.GetProcessesByName("gmod"));
                     foreach (var proc in procs)
                     {
                         if (!IsProcessInjectable(proc)) continue;
                         foundInjectable = true;
-                        var procHandle = OpenProcess((uint)(ProcessAccessFlags.VirtualMemoryOperation | ProcessAccessFlags.VirtualMemoryWrite | ProcessAccessFlags.CreateThread | ProcessAccessFlags.QueryInformation), false, (uint)proc.Id);
-                        if (procHandle != IntPtr.Zero)
+                        if (IsProcessInjected(proc))
                         {
-                            if (IsProcessInjected(proc) || Inject(procHandle))
+                            var existingPort = GetInjectedPort(proc);
+                            if (existingPort == -1)
                             {
-                                Status = InjectorStatus.Injected;
-                                injected = true;
-                                try
-                                {
-                                    OnInjected?.Invoke(proc, new EventArgs());
-                                } catch
-                                {
-
-                                }
-                                proc.WaitForExit();
-                                try
-                                {
-                                    OnInjectInvalid?.Invoke(proc, new EventArgs());
-                                } catch
-                                {
-
-                                }
-                                Status = InjectorStatus.NoProcessFound;
-                            } else
-                            {
-                                Status = InjectorStatus.InjectFailed;
+                                Status = InjectorStatus.NoPortAvailable;
+                                continue;
                             }
+                            DebuggingPort = existingPort;
+                            goto injected;
                         }
+                        
+                        var procHandle = OpenProcess((uint)(ProcessAccessFlags.VirtualMemoryOperation | ProcessAccessFlags.VirtualMemoryWrite | ProcessAccessFlags.CreateThread | ProcessAccessFlags.QueryInformation), false, (uint)proc.Id);
+                        if (procHandle == IntPtr.Zero || !Inject(proc, procHandle, port))
+                        {
+                            Status = InjectorStatus.InjectFailed;
+                            continue;
+                        }
+                        DebuggingPort = port;
+
+                    injected:
+                        Status = InjectorStatus.Injected;
+                        wasInjected = true;
+                        injected = true;
+                        try
+                        {
+                            OnInjected?.Invoke(proc, new EventArgs());
+                        }
+                        catch
+                        {
+
+                        }
+                        proc.WaitForExit();
+                        try
+                        {
+                            OnInjectInvalid?.Invoke(proc, new EventArgs());
+                        }
+                        catch
+                        {
+
+                        }
+                        Status = InjectorStatus.NoProcessFound;
                     }
                     if (procs.Count > 0 && !injected && !foundInjectable)
                         Status = InjectorStatus.ProcessIncompatible;
+                    else if (procs.Count == 0 && wasInjected)
+                        Status = InjectorStatus.NoProcessFound;
                     Thread.Sleep(300);
                 }
             })
