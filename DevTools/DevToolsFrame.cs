@@ -25,6 +25,8 @@ namespace DevTools
             browser = new ChromiumWebBrowser()
             {
                 Dock = DockStyle.Fill,
+                MenuHandler = new ContextMenuHandler(),
+                DragHandler = new DragHandler()
             };
             Controls.Add(browser);
         }
