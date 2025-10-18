@@ -17,7 +17,7 @@ namespace DevTools
             var length = GetWindowTextLength(hWnd) + 1;
             var title = new char[length];
             GetWindowText(hWnd, title, length);
-            return title.ToString();
+            return new string(title)?.TrimEnd('\0');
         }
 
         public static int GetInjectedPort(Process proc)
@@ -78,7 +78,7 @@ namespace DevTools
                 uint ret = GetModuleFileNameEx(hProc, hMods[i], buf, buf.Length);
                 if (ret == 0) continue;
 
-                var moduleName = buf.ToString();
+                var moduleName = new string(buf)?.TrimEnd('\0');
                 if (moduleName == null) continue;
 
                 var module = Path.GetFullPath(moduleName);

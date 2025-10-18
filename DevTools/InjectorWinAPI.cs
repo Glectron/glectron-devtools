@@ -147,7 +147,7 @@ namespace DevTools
         [LibraryImport("user32.dll", EntryPoint = "GetWindowTextW", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
         private static partial int GetWindowText(IntPtr hWnd, [Out] char[] lpString, int nMaxCount);
 
-        [LibraryImport("user32.dll", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+        [LibraryImport("user32.dll", EntryPoint = "GetWindowTextLengthW", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
         private static partial int GetWindowTextLength(IntPtr hWnd);
     }
 }

@@ -42,9 +42,8 @@
           {#each Object.values(injectorStates) as injectorState (injectorState.ProcessId)}
             {@const active = injectorState.ProcessId == currentActiveInjector}
             <button
-              class="text-left p-2 cursor-pointer rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 overflow-hidden"
-              class:shadow-md={active}
-              class:border-1={active}
+              class="text-left border-1 p-2 cursor-pointer rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 overflow-hidden"
+              class:shadow-sm={active}
               onclick={() => (currentActiveInjector = injectorState.ProcessId)}
             >
               <h2 class="flex items-center">
