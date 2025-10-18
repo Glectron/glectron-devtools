@@ -17,7 +17,7 @@ Latest version can be downloaded [here](https://github.com/Glectron/glectron-dev
 To build it, you will need `Visual Studio 2022`, `Node.JS`.
 
 Make sure you've installed `C++ Desktop Development` and `.NET Desktop Development` workload for your Visual Studio.
-This DevTools is built with `C++ 17` and `.NET 6.0`, also make sure you've installed the corresponding components.
+This DevTools is built with `C++ 17` and `.NET 8.0`, also make sure you've installed the corresponding components.
 
 We recommend that you should install `Yarn` package manager for your Node, but this is optional.
 

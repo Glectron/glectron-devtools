@@ -12,10 +12,10 @@ namespace DevTools
 {
     public partial class Injector
     {
-        public static string GetWindowTitle(IntPtr hWnd)
+        public static string? GetWindowTitle(IntPtr hWnd)
         {
             var length = GetWindowTextLength(hWnd) + 1;
-            var title = new StringBuilder(length);
+            var title = new char[length];
             GetWindowText(hWnd, title, length);
             return title.ToString();
         }
@@ -73,12 +73,15 @@ namespace DevTools
 
             for (int i = 0; i < modNum; i++)
             {
-                StringBuilder sb = new(256);
+                var buf = new char[256];
 
-                uint ret = GetModuleFileNameEx(hProc, hMods[i], sb, sb.Capacity);
+                uint ret = GetModuleFileNameEx(hProc, hMods[i], buf, buf.Length);
                 if (ret == 0) continue;
 
-                var module = Path.GetFullPath(sb.ToString());
+                var moduleName = buf.ToString();
+                if (moduleName == null) continue;
+
+                var module = Path.GetFullPath(moduleName);
                 var lowerModule = module.ToLower();
                 modules.Add(lowerModule);
             }

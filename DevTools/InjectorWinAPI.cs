@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.Marshalling;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -9,18 +10,19 @@ namespace DevTools
 {
     public partial class Injector
     {
-        [DllImport("kernel32.dll", SetLastError = true, CallingConvention = CallingConvention.Winapi)]
+        [LibraryImport("kernel32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
-        static extern bool IsWow64Process([In] IntPtr hProcess, [Out] out bool lpSystemInfo);
+        private static partial bool IsWow64Process(IntPtr hProcess, [MarshalAs(UnmanagedType.Bool)] out bool lpSystemInfo);
 
-        [DllImport("kernel32.dll", SetLastError = true)]
-        static extern IntPtr OpenProcess(
+        [LibraryImport("kernel32.dll", SetLastError = true)]
+        private static partial IntPtr OpenProcess(
              uint processAccess,
-             bool bInheritHandle,
+             [MarshalAs(UnmanagedType.Bool)] bool bInheritHandle,
              uint processId
         );
+
         [Flags]
-        enum ProcessAccessFlags : uint
+        internal enum ProcessAccessFlags : uint
         {
             All = 0x001F0FFF,
             Terminate = 0x00000001,
@@ -37,17 +39,18 @@ namespace DevTools
             Synchronize = 0x00100000
         }
 
-        [DllImport("kernel32.dll", EntryPoint = "GetModuleHandleW", SetLastError = true, CharSet = CharSet.Unicode)]
-        static extern IntPtr GetModuleHandle(string moduleName);
+        [LibraryImport("kernel32.dll", EntryPoint = "GetModuleHandleW", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+        private static partial IntPtr GetModuleHandle(string moduleName);
 
-        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Ansi)]
-        static extern IntPtr GetProcAddress(IntPtr hModule, string procName);
+        [LibraryImport("kernel32.dll", SetLastError = true, StringMarshalling = StringMarshalling.Utf8)]
+        private static partial IntPtr GetProcAddress(IntPtr hModule, string procName);
 
-        [DllImport("kernel32.dll", SetLastError = true, ExactSpelling = true)]
-        static extern IntPtr VirtualAllocEx(IntPtr hProcess, IntPtr lpAddress,
+        [LibraryImport("kernel32.dll", SetLastError = true)]
+        private static partial IntPtr VirtualAllocEx(IntPtr hProcess, IntPtr lpAddress,
             IntPtr dwSize, AllocationType flAllocationType, MemoryProtection flProtect);
+
         [Flags]
-        enum AllocationType
+        internal enum AllocationType
         {
             Commit = 0x1000,
             Reserve = 0x2000,
@@ -61,7 +64,7 @@ namespace DevTools
         }
 
         [Flags]
-        enum MemoryProtection
+        internal enum MemoryProtection
         {
             Execute = 0x10,
             ExecuteRead = 0x20,
@@ -76,46 +79,50 @@ namespace DevTools
             WriteCombineModifierflag = 0x400
         }
 
-        [DllImport("kernel32.dll", SetLastError = true)]
-        static extern bool WriteProcessMemory(
+        [LibraryImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static partial bool WriteProcessMemory(
           IntPtr hProcess,
           IntPtr lpBaseAddress,
           IntPtr lpBuffer,
           int dwSize,
           out IntPtr lpNumberOfBytesWritten);
 
-        [DllImport("kernel32.dll", SetLastError = true, ExactSpelling = true)]
-        static extern bool VirtualFreeEx(IntPtr hProcess, IntPtr lpAddress,
+        [LibraryImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static partial bool VirtualFreeEx(IntPtr hProcess, IntPtr lpAddress,
             int dwSize, FreeType dwFreeType);
+
         [Flags]
-        enum FreeType
+        internal enum FreeType
         {
             Decommit = 0x4000,
             Release = 0x8000,
         }
 
-        [DllImport("kernel32.dll")]
-        static extern IntPtr CreateRemoteThread(IntPtr hProcess,
+        [LibraryImport("kernel32.dll")]
+        private static partial IntPtr CreateRemoteThread(IntPtr hProcess,
            IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress,
            IntPtr lpParameter, uint dwCreationFlags, out IntPtr lpThreadId);
 
-        [DllImport("kernel32.dll", SetLastError = true)]
-        static extern int WaitForSingleObject(IntPtr handle, int wait);
+        [LibraryImport("kernel32.dll", SetLastError = true)]
+        private static partial int WaitForSingleObject(IntPtr handle, int wait);
         const int WAIT_OBJECT_0 = 0x00;
         const int WAIT_FAILED = -1;
 
-        [DllImport("kernel32.dll", SetLastError = true)]
-        static extern bool CloseHandle(IntPtr hHandle);
+        [LibraryImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static partial bool CloseHandle(IntPtr hHandle);
 
-        [DllImport("psapi.dll")]
-        static extern uint GetModuleFileNameEx(IntPtr hProcess, IntPtr hModule, [Out] StringBuilder lpBaseName, [In] int nSize);
+        [LibraryImport("psapi.dll", EntryPoint = "GetModuleFileNameExW", StringMarshalling = StringMarshalling.Utf16)]
+        private static partial uint GetModuleFileNameEx(IntPtr hProcess, IntPtr hModule, [Out] char[] lpBaseName, int nSize);
 
 #if X64
-        [DllImport("psapi.dll", CallingConvention = CallingConvention.StdCall, SetLastError = true)]
-        static extern int EnumProcessModulesEx(IntPtr hProcess, [Out] IntPtr lphModule, uint cb, out uint lpcbNeeded, uint filters);
+        [LibraryImport("psapi.dll", SetLastError = true)]
+        private static partial int EnumProcessModulesEx(IntPtr hProcess, IntPtr lphModule, uint cb, out uint lpcbNeeded, uint filters);
 #else
-        [DllImport("psapi.dll", CallingConvention = CallingConvention.StdCall, SetLastError = true)]
-        static extern int EnumProcessModules(IntPtr hProcess, [Out] IntPtr lphModule, uint cb, out uint lpcbNeeded);
+        [LibraryImport("psapi.dll", SetLastError = true)]
+        private static partial int EnumProcessModules(IntPtr hProcess, IntPtr lphModule, uint cb, out uint lpcbNeeded);
 #endif
 
         [StructLayout(LayoutKind.Sequential)]
@@ -129,18 +136,18 @@ namespace DevTools
             public IntPtr InheritedFromUniqueProcessId;
         }
 
-        [DllImport("ntdll.dll", CallingConvention = CallingConvention.StdCall, SetLastError = true)]
-        static extern int NtQueryInformationProcess(
+        [LibraryImport("ntdll.dll", SetLastError = true)]
+        private static partial int NtQueryInformationProcess(
             IntPtr processHandle,
             int processInformationClass,
             ref ProcessBasicInformation processInformation,
             uint processInformationLength,
             out uint returnLength);
 
-        [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-        static extern int GetWindowText(IntPtr hWnd, StringBuilder lpString, int nMaxCount);
+        [LibraryImport("user32.dll", EntryPoint = "GetWindowTextW", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+        private static partial int GetWindowText(IntPtr hWnd, [Out] char[] lpString, int nMaxCount);
 
-        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
-        static extern int GetWindowTextLength(IntPtr hWnd);
+        [LibraryImport("user32.dll", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+        private static partial int GetWindowTextLength(IntPtr hWnd);
     }
 }
