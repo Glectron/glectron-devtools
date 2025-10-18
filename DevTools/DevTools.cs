@@ -8,6 +8,8 @@ namespace DevTools
     {
         readonly ChromiumWebBrowser browser;
 
+        readonly Dictionary<int, Dictionary<string, DevToolsFrame>> devToolsWindows = [];
+
         public DevTools()
         {
             InitializeComponent();
@@ -21,36 +23,48 @@ namespace DevTools
             browser.JavascriptObjectRepository.Register("devtools", new JavaScriptBridge());
             Controls.Add(browser);
 
-            Injector.OnInjected += Injector_OnInjected;
-            Injector.OnInjectInvalid += Injector_OnInjectInvalid;
-            Injector.OnInjectorStatusChanged += Injector_OnInjectorStatusChanged;
+            Program.InjectorAdded += Program_InjectorAdded;
+            Program.InjectorRemoved += Program_InjectorRemoved;
+            Program.InjectorStatusChanged += Program_InjectorStatusChanged;
+            Program.InjectorTitleChanged += Program_InjectorTitleChanged;
 
-            if (Program.WasGModRunning)
+            foreach (var injector in Program.Injectors.Values)
             {
-                Process.Start(Program.GModPath);
+                devToolsWindows.Add(injector.TargetProcess.Id, []);
             }
         }
 
-        private async void Injector_OnInjected(object sender, EventArgs e)
+        private void Program_InjectorTitleChanged(Injector arg1, string? arg2)
         {
-            if (!browser.IsBrowserInitialized) return;
-            if (browser.IsLoading) await browser.WaitForNavigationAsync();
-            browser.ExecuteScriptAsync("dispatchEvent(new CustomEvent('injected', { detail: " + Injector.DebuggingPort + " }));");
+            UpdateInjectorState();
         }
 
-        private async void Injector_OnInjectInvalid(object sender, EventArgs e)
+        private void Program_InjectorStatusChanged(Injector arg1, Injector.InjectStatus arg2)
         {
-            if (!browser.IsBrowserInitialized) return;
-            if (browser.IsLoading) await browser.WaitForNavigationAsync();
-            browser.ExecuteScriptAsync("dispatchEvent(new Event('uninjected'));");
+            UpdateInjectorState();
         }
 
-        private async void Injector_OnInjectorStatusChanged(object sender, EventArgs e)
+        private void Program_InjectorRemoved(int pid)
+        {
+            foreach (var wnd in devToolsWindows[pid].Values)
+            {
+                wnd.Invoke(wnd.Close);
+            }
+            devToolsWindows.Remove(pid);
+            UpdateInjectorState();
+        }
+
+        private void Program_InjectorAdded(int pid, Injector injector)
+        {
+            devToolsWindows.Add(pid, []);
+            UpdateInjectorState();
+        }
+
+        private async void UpdateInjectorState()
         {
             if (!browser.IsBrowserInitialized) return;
             if (browser.IsLoading) await browser.WaitForNavigationAsync();
-            var stat = (InjectorStatus)sender;
-            browser.ExecuteScriptAsync("dispatchEvent(new CustomEvent('injectorstatus', {detail: " + (int)stat + "}))");
+            browser.ExecuteScriptAsync("dispatchEvent(new Event('updateinjectorstate'));");
         }
 
         private void DevTools_Load(object sender, EventArgs e)
@@ -61,6 +75,23 @@ namespace DevTools
         private void DevTools_FormClosed(object sender, FormClosedEventArgs e)
         {
             Application.Exit();
+        }
+
+        public void OpenDevToolsWindow(Injector injector, string id, string ws, string? title)
+        {
+            Invoke(() =>
+            {
+                var pid = injector.TargetProcess.Id;
+                var wnd = new DevToolsFrame(ws);
+                if (title != null) wnd.Text = title;
+                wnd.Text += " (#" + pid + ")";
+                wnd.FormClosed += (s, e) =>
+                {
+                    devToolsWindows[pid].Remove(id);
+                };
+                devToolsWindows[pid].Add(id, wnd);
+                wnd.Show();
+            });
         }
     }
 }

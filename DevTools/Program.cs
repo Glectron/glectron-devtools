@@ -6,10 +6,35 @@ namespace DevTools
 {
     internal static class Program
     {
-        public static bool WasGModRunning = false;
-        public static string GModPath = "";
-
         internal static DevTools? MainWindow = null;
+
+        internal static Dictionary<int, Injector> Injectors = [];
+
+        internal static event Action<int, Injector>? InjectorAdded;
+        internal static event Action<int>? InjectorRemoved;
+        internal static event Action<Injector, Injector.InjectStatus>? InjectorStatusChanged;
+        internal static event Action<Injector, string?>? InjectorTitleChanged;
+
+        private static Injector CreateInjector(Process proc)
+        {
+            var injector = new Injector(proc);
+            injector.ProcessExited += (pid) =>
+            {
+                Injectors.Remove(pid);
+                InjectorRemoved?.Invoke(pid);
+            };
+            injector.StatusChanged += (status) =>
+            {
+                InjectorStatusChanged?.Invoke(injector, status);
+            };
+            injector.TitleChanged += (title) =>
+            {
+                InjectorTitleChanged?.Invoke(injector, title);
+            };
+            Injectors.Add(proc.Id, injector);
+            InjectorAdded?.Invoke(proc.Id, injector);
+            return injector;
+        }
 
         /// <summary>
         ///  The main entry point for the application.
@@ -19,36 +44,35 @@ namespace DevTools
         {
             Application.EnableVisualStyles();
 
-            List<Process> gmodList = [];
-            bool injected = false;
-            var gmods = Process.GetProcessesByName("gmod");
-            foreach (var proc in gmods)
+            foreach (var proc in Process.GetProcessesByName("gmod"))
             {
-                if (Injector.IsProcessInjectable(proc)) gmodList.Add(proc);
-                if (Injector.IsProcessInjected(proc) && Injector.GetInjectedPort(proc) != -1) injected = true;
+                var injector = CreateInjector(proc);
+                if (!Injector.HasChromiumLoaded(proc))
+                {
+                    // Chromium hasn't loaded yet, try inject.
+                    injector.Inject();
+                }
             }
 
-            if (gmodList.Count > 0 && !injected)
+            // Keep monitoring new GMod processes.
+            Task.Run(async () =>
             {
-                var result = MessageBox.Show("Garry's Mod is running, would you like to restart it in order to use the DevTools?", "Question", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-                if (result == DialogResult.Yes)
+                while(true)
                 {
-                    WasGModRunning = true;
-                    foreach (var proc in gmodList)
+                    var processes = Process.GetProcessesByName("gmod").Where((v) => !Injectors.ContainsKey(v.Id));
+                    foreach (var proc in processes)
                     {
                         try
                         {
-                            if (proc.MainModule?.FileName != null)
-                                GModPath = proc.MainModule.FileName;
-                            proc.Kill();
-                            proc.WaitForExit();
+                            var injector = CreateInjector(proc);
+                            injector.Inject();
+                        } catch(Exception)
+                        {
                         }
-                        catch { }
                     }
+                    await Task.Delay(100);
                 }
-                else
-                    return;
-            }
+            });
 
             var settings = new CefSettings();
             settings.RegisterScheme(new CefCustomScheme

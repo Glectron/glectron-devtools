@@ -8,16 +8,21 @@ declare interface DevToolsListItem {
   webSocketDebuggerUrl: string
 }
 
+declare interface InjectorState {
+  ProcessId: number;
+  Status: import("./types").InjectorStatus;
+  Title: string | null;
+  DebuggingPort: number;
+}
+
 declare interface DevTools {
-  injectionStatus: () => Promise<[import("./types").InjectorStatus, number]>;
-  performRequest: (url: string) => Promise<string>;
-  openDevTools: (webSocketUrl: string, title?: string) => void;
+  getInjectorState(): Promise<InjectorState[]>;
+  performRequest(processId: number, url: string): Promise<string>;
+  openDevTools(processId: number, id: string, webSocketUrl: string, title?: string): Promise<void>;
 }
 
 interface WindowEventMap {
-  "injected": CustomEvent<int>;
-  "uninjected": Event;
-  "injectorstatus": CustomEvent<number>;
+  "updateinjectorstate": Event;
 }
 
 declare global {

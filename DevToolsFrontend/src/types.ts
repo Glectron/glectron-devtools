@@ -1,7 +1,8 @@
 export enum InjectorStatus {
-  NoProcessFound,
-  ProcessIncompatible,
-  NoPortAvailable,
+  NotInjected,
+  Injected,
   InjectFailed,
-  Injected
+  NotInjectable,
+  IsSubprocess,
+  NoAvailablePort
 }
