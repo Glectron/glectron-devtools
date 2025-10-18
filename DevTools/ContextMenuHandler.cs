@@ -11,7 +11,7 @@ namespace DevTools
     {
         public void OnBeforeContextMenu(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IContextMenuParams parameters, IMenuModel model)
         {
-            //if (frame.Url.StartsWith("devtools://")) return; // Context Menu handling is broken in CEF if loaded manually.
+            if (frame.Url.StartsWith("devtools://")) return; // Use default context menus in DevTools
             model.Clear();
 #if DEBUG
             model.AddItem(CefMenuCommand.Reload, "Reload");

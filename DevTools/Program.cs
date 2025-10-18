@@ -80,9 +80,11 @@ namespace DevTools
                 SchemeName = "glectron",
                 SchemeHandlerFactory = new SchemeHandlerFactory()
             });
+            settings.CachePath = Path.Combine(Path.GetDirectoryName(Application.ExecutablePath)!, "cache");
             Cef.Initialize(settings);
 
             CefSharpSettings.ConcurrentTaskExecution = true;
+            CefSharpSettings.RuntimeStyle = CefRuntimeStyle.Chrome;
 
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
