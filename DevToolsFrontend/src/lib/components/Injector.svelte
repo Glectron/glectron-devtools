@@ -24,7 +24,7 @@
     $effect(() => {
         switch (injectorState.Status) {
             case InjectorStatus.NotInjected:
-                statusText = "This process is not injected. To inject, restart the process.";
+                statusText = "Current Garry's Mod instance is not injected yet. Restart the game to inject.";
                 break;
             case InjectorStatus.InjectFailed:
                 statusText = "Injection failed.";
@@ -42,6 +42,9 @@
     });
 
     async function requestList(): Promise<DevToolsListItem[]> {
+        if (injectorState.Status !== InjectorStatus.Injected) {
+            return [];
+        }
         return await devtools
             .performRequest(injectorState.ProcessId, "/json?t=" + Date.now())
             .then((val: string) => JSON.parse(val));
@@ -74,7 +77,6 @@
 
     let lastPid = injectorState.ProcessId;
     $effect(() => {
-        void injectorState.ProcessId; // depend on ProcessId
         if (lastPid === injectorState.ProcessId) return;
         lastPid = injectorState.ProcessId;
         inspectables = [];
