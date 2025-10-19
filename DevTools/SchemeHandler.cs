@@ -11,7 +11,7 @@ namespace DevTools
 {
     internal class SchemeHandler : ResourceHandler
     {
-        readonly string FrontendPath = Path.Combine(Path.GetDirectoryName(Environment.ProcessPath) ?? "", "frontend");
+        readonly string FrontendPath = Path.Combine(Path.GetDirectoryName(Environment.ProcessPath)!, "frontend");
 
         public override CefReturnValue ProcessRequestAsync(IRequest request, ICallback callback)
         {
@@ -34,14 +34,6 @@ namespace DevTools
                         StatusCode = 404;
                         callback.Continue();
                     }
-                }
-                else if (uri.Host == "awesomiumpolyfill")
-                {
-                    var assembly = Assembly.GetExecutingAssembly();
-                    var stream = assembly.GetManifestResourceStream(assembly.GetName().Name + ".AwesomiumDevToolsPolyfill.js");
-                    Stream = stream;
-                    MimeType = "text/javascript";
-                    callback.Continue();
                 }
                 else
                 {
