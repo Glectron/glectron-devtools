@@ -176,7 +176,6 @@
     </ClCompile>
     <ClCompile Include="hook.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="memory.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cef_137_hook.h" />
@@ -185,7 +184,6 @@
     <ClInclude Include="common_type.h" />
     <ClInclude Include="global.h" />
     <ClInclude Include="hook.h" />
-    <ClInclude Include="memory.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="cef_hook_common.inl" />
