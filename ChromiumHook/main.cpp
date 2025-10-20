@@ -3,6 +3,7 @@
 #define x86 _WIN32 and !_WIN64
 
 #include <Windows.h>
+#include <stdio.h>
 
 #include "hook.h"
 #include "common_type.h"
