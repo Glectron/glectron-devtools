@@ -1,14 +1,7 @@
 #include "cef_86_hook.h"
 
-#include <include/capi/cef_base_capi.h>
+#define PREPARE_HOOK_FUNC cef_86_prepare_hook
+#define INITIALIZE_HOOK_FUNC cef_86_initialize_hook
+#define EXECUTE_PROCESS_HOOK_FUNC cef_86_execute_process_hook
 
-int cef_86_initialize_hook(const void* args, void* settings, void* application, void* windows_sandbox_info)
-{
-    if (cef_initialize_original == NULL)
-    {
-        return -1;
-    }
-    auto s = reinterpret_cast<_cef_settings_t*>(settings);
-    s->remote_debugging_port = debuggingPort;
-    return cef_initialize_original(args, s, application, windows_sandbox_info);
-}
+#include "cef_hook_common.inl"

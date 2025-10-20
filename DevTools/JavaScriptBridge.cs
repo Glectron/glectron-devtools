@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using System.Reflection;
 
 namespace DevTools
 {
@@ -46,6 +47,61 @@ namespace DevTools
             if (Program.MainWindow == null) throw new InvalidOperationException("Main window is not available.");
             var injector = Program.Injectors[processId] ?? throw new ArgumentException("Invalid process ID.");
             Program.MainWindow.OpenDevToolsWindow(injector, id, ws, title);
+        }
+
+        public void SetSetting(string name, object value)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                throw new ArgumentException("Setting name is required.", nameof(name));
+
+            var settings = InjectorSettings.GlobalSettings;
+            var type = typeof(InjectorSettings);
+
+            // Try fields first (ignore case)
+            var field = type.GetField(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.IgnoreCase);
+            if (field != null)
+            {
+                var converted = ConvertToType(value, field.FieldType);
+                field.SetValue(settings, converted);
+                return;
+            }
+
+            // Try properties
+            var prop = type.GetProperty(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.IgnoreCase);
+            if (prop != null && prop.CanWrite)
+            {
+                var converted = ConvertToType(value, prop.PropertyType);
+                prop.SetValue(settings, converted);
+                return;
+            }
+
+            throw new ArgumentException($"Unknown setting: {name}", nameof(name));
+
+            static object? ConvertToType(object? val, Type targetType)
+            {
+                if (val is null)
+                {
+                    if (targetType.IsValueType && Nullable.GetUnderlyingType(targetType) == null)
+                        throw new InvalidCastException($"Cannot assign null to non-nullable type {targetType.Name}.");
+                    return null;
+                }
+
+                var nonNullable = Nullable.GetUnderlyingType(targetType) ?? targetType;
+
+                if (nonNullable.IsEnum)
+                {
+                    if (val is string s)
+                        return Enum.Parse(nonNullable, s, ignoreCase: true);
+                    var underlyingEnumType = Enum.GetUnderlyingType(nonNullable);
+                    var convertedNumber = Convert.ChangeType(val, underlyingEnumType);
+                    return Enum.ToObject(nonNullable, convertedNumber!);
+                }
+
+                if (nonNullable == typeof(Guid) && val is string gs)
+                    return Guid.Parse(gs);
+
+                return Convert.ChangeType(val, nonNullable)!;
+            }
         }
     }
 }

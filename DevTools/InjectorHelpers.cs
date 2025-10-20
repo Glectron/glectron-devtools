@@ -20,19 +20,22 @@ namespace DevTools
             return new string(title)?.TrimEnd('\0');
         }
 
-        public static int GetInjectedPort(Process proc)
+        public static (int, InjectorSettings?) GetInjectedParams(Process proc)
         {
-            string shmName = $"GlectrionDevTools_{proc.Id}";
+            string shmName = $"GlectronDevTools_{proc.Id}";
             try
             {
                 using var mmf = MemoryMappedFile.OpenExisting(shmName);
                 using var accessor = mmf.CreateViewAccessor();
+
                 accessor.Read(0, out int port);
-                return port;
+                accessor.Read(4, out InjectorSettingsNative settings);
+
+                return (port, InjectorSettings.FromNative(settings));
             }
             catch
             {
-                return 0;
+                return (0, null);
             }
         }
 

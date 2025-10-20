@@ -14,8 +14,8 @@ namespace DevTools
             if (frame.Url.StartsWith("devtools://")) return; // Use default context menus in DevTools
             model.Clear();
 #if DEBUG
-            model.AddItem(CefMenuCommand.Reload, "Reload");
-            model.AddItem(CefMenuCommand.UserFirst, "Inspect");
+            model.AddItem(CefMenuCommand.UserFirst, "Reload");
+            model.AddItem((CefMenuCommand)(int)CefMenuCommand.UserFirst + 1, "Inspect");
 #endif
         }
 
@@ -24,7 +24,11 @@ namespace DevTools
 #if DEBUG
             if (commandId == CefMenuCommand.UserFirst)
             {
-                chromiumWebBrowser.ShowDevTools();
+                browser.Reload(true);
+            }
+            else if (commandId == (CefMenuCommand)(int)CefMenuCommand.UserFirst + 1)
+            {
+                chromiumWebBrowser.ShowDevTools(null, parameters.XCoord, parameters.YCoord);
                 return true;
             }
 #endif

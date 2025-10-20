@@ -4,119 +4,130 @@
 
 #include <Windows.h>
 
+#include "hook.h"
+#include "common_type.h"
 #include "common_cef_type.h"
-#include "cef_86_hook.h"
-#if _WIN64
-#include "cef_137_hook.h"
-#endif
 #include "detours/detours.h"
 #include "memory.h"
 
-typedef HMODULE(__stdcall*LoadLibraryExAType)(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags);
-HMODULE __stdcall LoadLibraryExAHook(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags);
-
-HANDLE stateMapFile;
+HINSTANCE dllInstance = NULL;
+LoadLibraryExAType LoadLibraryExAOriginal = LoadLibraryExA;
+CreateProcessWType CreateProcessWOriginal = CreateProcessW;
 
 cef_initializeType cef_initialize_original = NULL;
-int debuggingPort = 46587;
+cef_executeProcessType cef_execute_process_original = NULL;
 
-LoadLibraryExAType LoadLibraryExAOriginal = LoadLibraryExA;
+bool g_isSubprocess = false;
+int g_debuggingPort = 46587;
+InjectorSettings g_injectorSettings = { false };
 
-HMODULE __stdcall LoadLibraryExAHook(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags)
+__declspec(dllexport) void DummyEmptyFunction() { }
+
+static int ParseParentPidFromCommandLine()
 {
-    HMODULE moduleAddress = LoadLibraryExAOriginal(lpLibFileName, hFile, dwFlags);
+    const wchar_t* key = L"--glectron-devtools-parent=";
+    const wchar_t* cmd = GetCommandLineW();
+    if (!cmd) return 0;
 
-    if (moduleAddress)
-    {
-        if (strstr(lpLibFileName, "html_chromium.dll") != NULL)
-        {
-            auto hook_func = cef_86_initialize_hook;
-            auto module = CModule("libcef.dll");
-#if _WIN64
-            CMemAddr addr = module.FindPatternSIMD("41 57 41 56 41 54 56 57 55 53 48 81 EC 10 02 00 00 48 8B 05 ?? ?? ?? ?? 48 31 E0 48 89 84 24 08 02 00 00 31");
-            if (addr.GetPtr() == 0) {
-                // not CEF 86, maybe GModPatchTool, try again
-                addr = module.FindPatternSIMD("41 57 41 56 56 57 53 48 81 EC ?? ?? 00 00 4C 89 C7 48 89 D3 48 8B 05 ?? ?? ?? ?? 48 31 E0");
-                hook_func = cef_137_initialize_hook;
-            }
-            if (addr.GetPtr() == 0) {
-                // give up
-                return moduleAddress;
-            }
-#else
-            CMemAddr addr = module.FindPatternSIMD("55 89 E5 53 57 56 81 EC 0C 01 00 00 8B 45 08 8B 0D ?? ?? ?? ?? 31 E9 89 4D F0 31");
-#endif
-            cef_initialize_original = reinterpret_cast<cef_initializeType>(addr.GetPtr());
-            DetourTransactionBegin();
-            DetourUpdateThread(GetCurrentThread());
-            DetourAttach(&(PVOID&)cef_initialize_original, hook_func);
-            DetourTransactionCommit();
-        }
-    }
+    const wchar_t* found = wcsstr(cmd, key);
+    if (!found) return 0;
 
-    return moduleAddress;
+    found += wcslen(key);
+    wchar_t* endptr = nullptr;
+    unsigned long long val = _wcstoui64(found, &endptr, 10);
+    if (endptr == found) return 0;
+    if (val == 0 || val > 0xFFFFFFFFULL) return 0;
+
+    return (int)val;
 }
 
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved)
 {
     if (dwReason == DLL_PROCESS_ATTACH) {
-		// Read injector parameter from shared memory.
+        dllInstance = hinst;
+
+        int parentPid = ParseParentPidFromCommandLine();
+        g_isSubprocess = parentPid != 0;
+
+        // Read injector parameter from shared memory. Read from parent process if is a subprocess.
         char shmName[256];
-        sprintf_s(shmName, "GlectrionDevToolsParam_%lu", GetCurrentProcessId());
+        sprintf_s(shmName, g_isSubprocess ? "GlectronDevTools_%lu" : "GlectronDevToolsParam_%lu", g_isSubprocess ? parentPid : GetCurrentProcessId());
 
         HANDLE hMapFile = OpenFileMappingA(FILE_MAP_READ, FALSE, shmName);
         if (hMapFile != NULL)
         {
-            int* pParam = (int*)MapViewOfFile(hMapFile, FILE_MAP_READ, 0, 0, sizeof(int));
-            if (pParam != NULL)
+            SIZE_T paramMappingSize = sizeof(int) + sizeof(InjectorSettings);
+            void* pParamView = MapViewOfFile(hMapFile, FILE_MAP_READ, 0, 0, paramMappingSize);
+            if (pParamView != NULL)
             {
-                debuggingPort = *pParam;
+                // Read port
+                int* pParam = (int*)pParamView;
+                g_debuggingPort = *pParam;
 
-                UnmapViewOfFile(pParam);
+                // Read settings
+                InjectorSettings* pSettings = (InjectorSettings*)((char*)pParamView + sizeof(int));
+                g_injectorSettings = *pSettings;
+
+                UnmapViewOfFile(pParamView);
             }
+
             CloseHandle(hMapFile);
         }
 
-        // Create shared memory to store the DevTools state.
-        sprintf_s(shmName, "GlectrionDevTools_%lu", GetCurrentProcessId());
+        if (!g_isSubprocess) {
+            // Create shared memory to store the DevTools state (port + InjectorSettings).
+            sprintf_s(shmName, "GlectronDevTools_%lu", GetCurrentProcessId());
 
-        hMapFile = CreateFileMappingA(
-            INVALID_HANDLE_VALUE,
-            NULL,
-            PAGE_READWRITE,
-            0,
-            sizeof(int),
-            shmName);
+            // compute mapping size: int (port) + native InjectorSettings
+            SIZE_T mappingSize = sizeof(int) + sizeof(InjectorSettings);
 
-        if (hMapFile == NULL)
-        {
-            return NULL;
+            hMapFile = CreateFileMappingA(
+                INVALID_HANDLE_VALUE,
+                NULL,
+                PAGE_READWRITE,
+                (DWORD)((mappingSize >> 32) & 0xFFFFFFFF),
+                (DWORD)(mappingSize & 0xFFFFFFFF),
+                shmName);
+
+            if (hMapFile == NULL)
+            {
+                return NULL;
+            }
+
+            void* pView = MapViewOfFile(
+                hMapFile,
+                FILE_MAP_ALL_ACCESS,
+                0,
+                0,
+                mappingSize);
+
+            if (pView == NULL)
+            {
+                CloseHandle(hMapFile);
+                return NULL;
+            }
+
+            int* pPort = (int*)pView;
+            *pPort = g_debuggingPort;
+
+            InjectorSettings* pSettings = (InjectorSettings*)((char*)pView + sizeof(int));
+            *pSettings = g_injectorSettings;
+
+            UnmapViewOfFile(pView);
         }
 
-        int* pBuf = (int*)MapViewOfFile(
-            hMapFile,
-            FILE_MAP_ALL_ACCESS,
-            0,
-            0,
-            sizeof(int));
-
-        if (pBuf == NULL)
-        {
-            CloseHandle(hMapFile);
-            return NULL;
+        if (!g_isSubprocess) {
+            DetourTransactionBegin();
+            DetourUpdateThread(GetCurrentThread());
+            DetourAttach(&(PVOID&)LoadLibraryExAOriginal, LoadLibraryExAHook);
+            if (g_injectorSettings.DisableSandbox && g_injectorSettings.RegisterAssetAsSecured) {
+                DetourAttach(&(PVOID&)CreateProcessWOriginal, CreateProcessWHook);
+            }
+            DetourTransactionCommit();
         }
-
-        // Write the value
-        *pBuf = debuggingPort;
-
-        UnmapViewOfFile(pBuf);
-
-		stateMapFile = hMapFile;
-
-        DetourTransactionBegin();
-        DetourUpdateThread(GetCurrentThread());
-        DetourAttach(&(PVOID&)LoadLibraryExAOriginal, LoadLibraryExAHook);
-        DetourTransactionCommit();
+        else {
+            HookCEFExecuteProcess();
+        }
     }
 
     return TRUE;

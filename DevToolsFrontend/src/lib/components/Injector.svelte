@@ -158,7 +158,11 @@
                         </div>
                     {/if}
                 {:else}
-                    <p class="text-center">No inspectable view found.</p>
+                    {#if refreshing}
+                        <p class="text-center">Loading inspectable views...</p>
+                    {:else}
+                        <p class="text-center">No inspectable view found.</p>
+                    {/if}
                 {/each}
             </div>
         </ScrollArea>

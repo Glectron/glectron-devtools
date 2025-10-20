@@ -27,6 +27,9 @@
     <ClCompile Include="cef_137_hook.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="hook.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="memory.h">
@@ -41,5 +44,19 @@
     <ClInclude Include="cef_137_hook.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="common_type.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="hook.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="global.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="cef_hook_common.inl">
+      <Filter>头文件</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -25,6 +25,7 @@ namespace DevTools
         public Process TargetProcess { get; private set; }
 
         public int DebuggingPort { get; private set; }
+        public InjectorSettings Settings { get; private set; }
 
         private InjectStatus _status;
         public InjectStatus Status
@@ -68,12 +69,12 @@ namespace DevTools
             if (IsSubprocess(process))
             {
                 Status = InjectStatus.IsSubprocess;
+                Settings = new();
                 return;
             }
-            DebuggingPort = GetInjectedPort(process);
+            InjectorSettings? settings;
+            (DebuggingPort, settings) = GetInjectedParams(process);
             Title = process.MainWindowTitle;
-            process.EnableRaisingEvents = true;
-            process.Exited += OnProcessExited;
             if (DebuggingPort != 0)
             {
                 Status = InjectStatus.Injected;
@@ -82,12 +83,19 @@ namespace DevTools
             {
                 Status = InjectStatus.NotInjected;
             }
+            Settings = settings ?? new();
             Task.Run(async () =>
             {
                 try
                 {
                     while (!_cts.IsCancellationRequested)
                     {
+                        if (process.HasExited)
+                        {
+                            OnProcessExited();
+                            _cts.Cancel();
+                            return;
+                        }
                         Title = GetWindowTitle(process.MainWindowHandle);
                         await Task.Delay(1000, _cts.Token);
                     }
@@ -100,12 +108,11 @@ namespace DevTools
 
         ~Injector()
         {
-            TargetProcess.Exited -= OnProcessExited;
             _cts.Cancel();
             _cts.Dispose();
         }
 
-        private void OnProcessExited(object? sender, EventArgs e)
+        private void OnProcessExited()
         {
             ProcessExited?.Invoke(TargetProcess.Id);
         }
@@ -132,11 +139,18 @@ namespace DevTools
                 return false;
             }
 
-            string shmName = $"GlectrionDevToolsParam_{TargetProcess.Id}";
-            using var mmf = MemoryMappedFile.CreateNew(shmName, sizeof(int));
+            string shmName = $"GlectronDevToolsParam_{TargetProcess.Id}";
+            using var mmf = MemoryMappedFile.CreateNew(
+                shmName,
+                sizeof(int) + Marshal.SizeOf<InjectorSettingsNative>()
+            );
             using var accessor = mmf.CreateViewAccessor();
 
+            var settings = InjectorSettings.GlobalSettings.Clone();
+            var nativeSettings = settings.ToNative();
+
             accessor.Write(0, port);
+            accessor.Write(sizeof(int), ref nativeSettings);
 
             var hLib = GetModuleHandle("kernel32.dll");
             if (hLib == IntPtr.Zero)
@@ -182,7 +196,11 @@ namespace DevTools
             IntPtr waitHandle = CreateRemoteThread(procHandle, IntPtr.Zero, 0, hProc, remoteAddr, 0, out _);
             if (waitHandle != IntPtr.Zero)
             {
+#if DEBUG
+                waitRet = WaitForSingleObject(waitHandle, 300 * 1000); // longer wait for debug build
+#else
                 waitRet = WaitForSingleObject(waitHandle, 10 * 1000);
+#endif
                 CloseHandle(waitHandle);
             }
 
