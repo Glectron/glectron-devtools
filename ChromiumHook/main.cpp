@@ -8,7 +8,6 @@
 #include "common_type.h"
 #include "common_cef_type.h"
 #include "detours/detours.h"
-#include "memory.h"
 
 HINSTANCE dllInstance = NULL;
 LoadLibraryExAType LoadLibraryExAOriginal = LoadLibraryExA;
