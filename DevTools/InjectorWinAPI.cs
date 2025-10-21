@@ -117,13 +117,8 @@ namespace DevTools
         [LibraryImport("psapi.dll", EntryPoint = "GetModuleFileNameExW", StringMarshalling = StringMarshalling.Utf16)]
         private static partial uint GetModuleFileNameEx(IntPtr hProcess, IntPtr hModule, [Out] char[] lpBaseName, int nSize);
 
-#if X64
         [LibraryImport("psapi.dll", SetLastError = true)]
         private static partial int EnumProcessModulesEx(IntPtr hProcess, IntPtr lphModule, uint cb, out uint lpcbNeeded, uint filters);
-#else
-        [LibraryImport("psapi.dll", SetLastError = true)]
-        private static partial int EnumProcessModules(IntPtr hProcess, IntPtr lphModule, uint cb, out uint lpcbNeeded);
-#endif
 
         [StructLayout(LayoutKind.Sequential)]
         public struct ProcessBasicInformation

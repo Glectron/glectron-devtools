@@ -54,7 +54,7 @@ namespace DevTools
 
         private static string[] GetModules(Process proc)
         {
-            var hProc = OpenProcess((uint)(ProcessAccessFlags.QueryInformation | ProcessAccessFlags.VirtualMemoryRead), false, (uint)proc.Id);
+            var hProc = OpenProcess((uint)(ProcessAccessFlags.QueryInformation), false, (uint)proc.Id);
             if (hProc == IntPtr.Zero) return [];
 
             IntPtr[] hMods = new IntPtr[1024];
@@ -63,11 +63,7 @@ namespace DevTools
             IntPtr pModules = handle.AddrOfPinnedObject();
 
             uint size = (uint)(Marshal.SizeOf(typeof(IntPtr)) * hMods.Length);
-#if X64
             int r = EnumProcessModulesEx(hProc, pModules, size, out uint cbNeeded, 0x03);
-#else
-            int r = EnumProcessModules(hProc, pModules, size, out uint cbNeeded);
-#endif
             if (r == 0) return [];
 
             int modNum = (int)(cbNeeded / Marshal.SizeOf(typeof(IntPtr)));
@@ -88,6 +84,8 @@ namespace DevTools
                 var lowerModule = module.ToLower();
                 modules.Add(lowerModule);
             }
+
+            CloseHandle(hProc);
 
             return [.. modules];
         }

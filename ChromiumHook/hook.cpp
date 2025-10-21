@@ -8,6 +8,18 @@
 #include "cef_137_hook.h"
 #include "detours/detours.h"
 
+static int GetCEFVersion() {
+    auto mod = GetModuleHandleW(L"libcef.dll");
+    if (mod == NULL) return -1;
+
+	auto cef_version_info_addr = GetProcAddress(mod, "cef_version_info");
+    if (cef_version_info_addr == NULL) return -1;
+
+	auto cef_version_info = reinterpret_cast<cef_versionInfoType>(cef_version_info_addr);
+    
+    return cef_version_info(4); // CHROME_VERSION_MAJOR
+}
+
 bool HookCEFInitialize() {
     auto mod = GetModuleHandleW(L"libcef.dll");
     if (mod == NULL) return false;
@@ -17,8 +29,7 @@ bool HookCEFInitialize() {
 
     auto hook_func = cef_86_initialize_hook;
 
-    auto cef_version_info_addr = GetProcAddress(mod, "cef_version_info");
-    if (cef_version_info_addr != NULL) {
+    if (GetCEFVersion() >= 137) {
         cef_137_prepare_hook();
         hook_func = cef_137_initialize_hook;
     } else {
@@ -36,14 +47,17 @@ bool HookCEFInitialize() {
 
 bool HookCEFExecuteProcess() {
     auto mod = GetModuleHandleW(L"libcef.dll");
-    if (mod == NULL) return false;
+    if (mod == NULL) {
+        // Workaround: CEF 86's subprocesses don't load libcef.dll so early.
+        mod = LoadLibraryW(L"libcef.dll");
+        if (mod == NULL) return false;
+    }
     auto cef_execute_process_addr = GetProcAddress(mod, "cef_execute_process");
     if (cef_execute_process_addr == NULL) return false;
 
     auto hook_func = cef_86_execute_process_hook;
 
-    auto cef_version_info_addr = GetProcAddress(mod, "cef_version_info");
-    if (cef_version_info_addr != NULL) {
+    if (GetCEFVersion() >= 137) {
         cef_137_prepare_hook();
         hook_func = cef_137_execute_process_hook;
     }
