@@ -15,6 +15,7 @@ namespace DevTools
         public enum InjectStatus
         {
             NotInjected,
+            Injecting,
             Injected,
             InjectFailed,
             NotInjectable,
@@ -119,6 +120,7 @@ namespace DevTools
 
         public bool Inject(int? debuggingPort = null)
         {
+            Status = InjectStatus.Injecting;
             int port;
             try
             {

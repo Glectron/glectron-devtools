@@ -26,6 +26,9 @@
             case InjectorStatus.NotInjected:
                 statusText = "Current Garry's Mod instance is not injected yet. Restart the game to inject.";
                 break;
+            case InjectorStatus.Injecting:
+                statusText = "Injecting...";
+                break;
             case InjectorStatus.InjectFailed:
                 statusText = "Injection failed.";
                 break;
