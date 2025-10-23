@@ -17,6 +17,7 @@
     <!-- CefSharp runtime copy settings -->
     <CefSharpAnyCpuSupport>false</CefSharpAnyCpuSupport>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
   
   <PropertyGroup Condition="'$(Platform)' == 'x86'">

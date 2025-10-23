@@ -5,8 +5,10 @@
 </script>
 
 <div class="flex flex-col gap-4 p-4">
-    <h1 class="text-2xl font-bold">Settings</h1>
-    <p class="text-muted-foreground text-sm">The following settings are not applied to existing Garry's Mod instances.</p>
+    <div>
+        <h1 class="text-2xl font-bold">Settings</h1>
+        <p class="text-muted-foreground text-sm">The following settings are not applied to currently running Garry's Mod instances.</p>
+    </div>
     <div class="flex items-start gap-3">
         <Checkbox id="disable-sandbox" bind:checked={$disableSandbox} />
         <div class="grid gap-2">

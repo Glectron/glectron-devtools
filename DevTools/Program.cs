@@ -46,11 +46,16 @@ namespace DevTools
 
             foreach (var proc in Process.GetProcessesByName("gmod"))
             {
-                var injector = CreateInjector(proc);
-                if (!Injector.HasChromiumLoaded(proc))
+                try
                 {
-                    // Chromium hasn't loaded yet, try inject.
-                    injector.Inject();
+                    var injector = CreateInjector(proc);
+                    if (!Injector.HasChromiumLoaded(proc))
+                    {
+                        // Chromium hasn't loaded yet, try inject.
+                        injector.Inject();
+                    }
+                } catch
+                {
                 }
             }
 
@@ -66,7 +71,7 @@ namespace DevTools
                         {
                             var injector = CreateInjector(proc);
                             injector.Inject();
-                        } catch(Exception)
+                        } catch
                         {
                         }
                     }

@@ -97,7 +97,10 @@ namespace DevTools
                             _cts.Cancel();
                             return;
                         }
-                        Title = GetWindowTitle(process.MainWindowHandle);
+                        try
+                        {
+                            Title = GetWindowTitle(process.MainWindowHandle);
+                        } catch { }
                         await Task.Delay(1000, _cts.Token);
                     }
                 } catch (OperationCanceledException)

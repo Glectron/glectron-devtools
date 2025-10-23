@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { ModeWatcher } from "mode-watcher";
+
   import "./app.css";
   import * as Resizable from "$lib/components/ui/resizable";
   import Injector from "$lib/components/Injector.svelte";
@@ -35,6 +37,8 @@
     await refreshInjectorState();
   })();
 </script>
+
+<ModeWatcher />
 
 <div class="select-none w-[100vw] h-[100vh]">
   <Resizable.PaneGroup direction="horizontal">
