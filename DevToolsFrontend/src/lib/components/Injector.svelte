@@ -85,6 +85,43 @@
         inspectables = [];
         refreshList();
     });
+
+    let lastDecodedTitles = $state(new Map<string, string>());
+
+    function handleTitleChange(
+        item: DevToolsListItem,
+        oldTitle: string | undefined,
+        newTitle: string,
+    ) {
+        devtools.setDevToolsTitle(
+            injectorState.ProcessId,
+            item.id,
+            newTitle,
+        );
+    }
+
+    // Watch inspectables and detect changes to he.decode(item.title)
+    $effect(() => {
+        // Build a set of current ids for pruning
+        const currentIds = new Set<string>();
+
+        for (const item of inspectables) {
+            const id = item.id;
+            currentIds.add(id);
+            const decoded = he.decode(item.title || "");
+            const prev = lastDecodedTitles.get(id);
+            if (prev !== decoded) {
+                // Title changed (or new)
+                handleTitleChange(item, prev, decoded);
+                lastDecodedTitles.set(id, decoded);
+            }
+        }
+
+        // Remove any entries for inspectables that no longer exist
+        for (const storedId of Array.from(lastDecodedTitles.keys())) {
+            if (!currentIds.has(storedId)) lastDecodedTitles.delete(storedId);
+        }
+    });
 </script>
 
 {#if statusText}

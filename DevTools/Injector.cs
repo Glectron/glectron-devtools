@@ -67,26 +67,6 @@ namespace DevTools
         public Injector(Process process)
         {
             TargetProcess = process;
-            if (IsSubprocess(process))
-            {
-                Status = InjectStatus.IsSubprocess;
-                Settings = new();
-            }
-            else
-            {
-                InjectorSettings? settings;
-                (DebuggingPort, settings) = GetInjectedParams(process);
-                Title = process.MainWindowTitle;
-                if (DebuggingPort != 0)
-                {
-                    Status = InjectStatus.Injected;
-                }
-                else
-                {
-                    Status = InjectStatus.NotInjected;
-                }
-                Settings = settings ?? new();
-            }
             Task.Run(async () =>
             {
                 try
@@ -109,11 +89,30 @@ namespace DevTools
                         }
                         await Task.Delay(1000, _cts.Token);
                     }
-                } catch (OperationCanceledException)
+                }
+                catch (OperationCanceledException)
                 {
                     return;
                 }
             });
+            if (IsSubprocess(process))
+            {
+                Status = InjectStatus.IsSubprocess;
+                Settings = new();
+                return;
+            }
+            InjectorSettings? settings;
+            (DebuggingPort, settings) = GetInjectedParams(process);
+            Title = process.MainWindowTitle;
+            if (DebuggingPort != 0)
+            {
+                Status = InjectStatus.Injected;
+            }
+            else
+            {
+                Status = InjectStatus.NotInjected;
+            }
+            Settings = settings ?? new();
         }
 
         ~Injector()

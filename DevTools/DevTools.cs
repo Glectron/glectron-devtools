@@ -82,8 +82,15 @@ namespace DevTools
             Invoke(() =>
             {
                 var pid = injector.TargetProcess.Id;
-                var wnd = new DevToolsFrame(ws);
-                if (title != null) wnd.Text = title;
+                if (devToolsWindows[pid].TryGetValue(id, out DevToolsFrame? value))
+                {
+                    value.Activate();
+                    return;
+                }
+                var wnd = new DevToolsFrame(id, ws)
+                {
+                    Text = title ?? id
+                };
                 wnd.Text += " (#" + pid + ")";
                 wnd.FormClosed += (s, e) =>
                 {
@@ -91,6 +98,19 @@ namespace DevTools
                 };
                 devToolsWindows[pid].Add(id, wnd);
                 wnd.Show();
+            });
+        }
+
+        public void SetDevToolsWindowTitle(Injector injector, string id, string? title)
+        {
+            Invoke(() =>
+            {
+                var pid = injector.TargetProcess.Id;
+                if (devToolsWindows[pid].TryGetValue(id, out DevToolsFrame? value))
+                {
+                    value.Text = title ?? id;
+                    value.Text += " (#" + pid + ")";
+                }
             });
         }
     }

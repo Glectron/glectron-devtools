@@ -14,12 +14,16 @@ namespace DevTools
     public partial class DevToolsFrame : Form
     {
         private readonly string ws;
+        private readonly string id;
         private readonly ChromiumWebBrowser browser;
 
-        public DevToolsFrame(string ws)
+        public string Id => id;
+
+        public DevToolsFrame(string id, string ws)
         {
             InitializeComponent();
 
+            this.id = id;
             this.ws = ws;
 
             browser = new ChromiumWebBrowser()

@@ -19,6 +19,7 @@ declare interface DevTools {
   getInjectorState(): Promise<InjectorState[]>;
   performRequest(processId: number, url: string): Promise<string>;
   openDevTools(processId: number, id: string, webSocketUrl: string, title?: string): Promise<void>;
+  setDevToolsTitle(processId: number, id: string, title: string): Promise<void>;
   setSetting(key: string, value: any): Promise<void>;
 }
 

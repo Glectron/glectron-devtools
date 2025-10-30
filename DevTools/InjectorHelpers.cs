@@ -54,7 +54,7 @@ namespace DevTools
 
         private static string[] GetModules(Process proc)
         {
-            var hProc = OpenProcess((uint)(ProcessAccessFlags.QueryInformation), false, (uint)proc.Id);
+            var hProc = OpenProcess((uint)(ProcessAccessFlags.QueryInformation | ProcessAccessFlags.VirtualMemoryRead), false, (uint)proc.Id);
             if (hProc == IntPtr.Zero) return [];
 
             IntPtr[] hMods = new IntPtr[1024];

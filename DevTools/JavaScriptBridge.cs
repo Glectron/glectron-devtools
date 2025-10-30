@@ -49,6 +49,13 @@ namespace DevTools
             Program.MainWindow.OpenDevToolsWindow(injector, id, ws, title);
         }
 
+        public void SetDevToolsTitle(int processId, string id, string title)
+        {
+            if (Program.MainWindow == null) throw new InvalidOperationException("Main window is not available.");
+            var injector = Program.Injectors[processId] ?? throw new ArgumentException("Invalid process ID.");
+            Program.MainWindow.SetDevToolsWindowTitle(injector, id, title);
+        }
+
         public void SetSetting(string name, object value)
         {
             if (string.IsNullOrWhiteSpace(name))
