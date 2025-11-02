@@ -33,6 +33,13 @@ namespace DevTools
             };
             Injectors.Add(proc.Id, injector);
             InjectorAdded?.Invoke(proc.Id, injector);
+            // Did it exited at this point?
+            if (proc.HasExited)
+            {
+                // Remove it then, it won't be used later, maybe
+                Injectors.Remove(proc.Id);
+                InjectorRemoved?.Invoke(proc.Id);
+            }
             return injector;
         }
 
