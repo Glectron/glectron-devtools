@@ -1,6 +1,7 @@
 using CefSharp.WinForms;
 using CefSharp;
 using System.Diagnostics;
+using System.Collections.Concurrent;
 
 namespace DevTools
 {
@@ -8,19 +9,19 @@ namespace DevTools
     {
         internal static DevTools? MainWindow = null;
 
-        internal static Dictionary<int, Injector> Injectors = [];
+        internal static ConcurrentDictionary<int, Injector> Injectors = [];
 
         internal static event Action<int, Injector>? InjectorAdded;
         internal static event Action<int>? InjectorRemoved;
         internal static event Action<Injector, Injector.InjectStatus>? InjectorStatusChanged;
         internal static event Action<Injector, string?>? InjectorTitleChanged;
 
-        private static Injector CreateInjector(Process proc)
+        private static Injector? CreateInjector(Process proc)
         {
             var injector = new Injector(proc);
             injector.ProcessExited += (pid) =>
             {
-                Injectors.Remove(pid);
+                Injectors.TryRemove(pid, out _);
                 InjectorRemoved?.Invoke(pid);
             };
             injector.StatusChanged += (status) =>
@@ -31,14 +32,16 @@ namespace DevTools
             {
                 InjectorTitleChanged?.Invoke(injector, title);
             };
-            Injectors.Add(proc.Id, injector);
+            if (!Injectors.TryAdd(proc.Id, injector))
+                return null;
             InjectorAdded?.Invoke(proc.Id, injector);
             // Did it exited at this point?
             if (proc.HasExited)
             {
                 // Remove it then, it won't be used later, maybe
-                Injectors.Remove(proc.Id);
+                Injectors.TryRemove(proc.Id, out _);
                 InjectorRemoved?.Invoke(proc.Id);
+                return null;
             }
             return injector;
         }
@@ -56,7 +59,7 @@ namespace DevTools
                 try
                 {
                     var injector = CreateInjector(proc);
-                    if (!Injector.HasChromiumLoaded(proc))
+                    if (injector != null && !Injector.HasChromiumLoaded(proc))
                     {
                         // Chromium hasn't loaded yet, try inject.
                         injector.Inject();
@@ -77,7 +80,8 @@ namespace DevTools
                         try
                         {
                             var injector = CreateInjector(proc);
-                            injector.Inject();
+                            if (injector != null)
+                                injector.Inject();
                         } catch
                         {
                         }

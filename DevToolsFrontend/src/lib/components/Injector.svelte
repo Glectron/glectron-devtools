@@ -76,6 +76,10 @@
 
     onMount(() => {
         refreshList(true);
+
+        return () => {
+            clearTimeout(listRefreshTimeout);
+        };
     });
 
     let lastPid = injectorState.ProcessId;
@@ -148,7 +152,7 @@
                         Remote Debugging not available
                     </p>
                 {/if}
-                <Button class="cursor-pointer" disabled={refreshing}>
+                <Button class="cursor-pointer" disabled={refreshing} onclick={() => refreshList()}>
                     <RefreshCcw />
                 </Button>
             </div>

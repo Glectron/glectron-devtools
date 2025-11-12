@@ -50,13 +50,13 @@ namespace DevTools
             {
                 wnd.Invoke(wnd.Close);
             }
-            devToolsWindows.Remove(pid);
+            Invoke(() => devToolsWindows.Remove(pid));
             UpdateInjectorState();
         }
 
         private void Program_InjectorAdded(int pid, Injector injector)
         {
-            devToolsWindows.Add(pid, []);
+            Invoke(() => devToolsWindows.Add(pid, []));
             UpdateInjectorState();
         }
 

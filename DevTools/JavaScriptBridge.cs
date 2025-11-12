@@ -10,6 +10,8 @@ namespace DevTools
 {
     internal class JavaScriptBridge
     {
+        private readonly HttpClient hc = new();
+
         public class InjectorState
         {
             public int ProcessId;
@@ -37,7 +39,6 @@ namespace DevTools
             var injector = Program.Injectors[processId] ?? throw new ArgumentException("Invalid process ID.");
             if (injector.DebuggingPort == 0)
                 throw new ArgumentException($"{processId} isn't injected.");
-            HttpClient hc = new();
             var res = await hc.GetAsync("http://localhost:" + injector.DebuggingPort + path);
             return await res.Content.ReadAsStringAsync();
         }
